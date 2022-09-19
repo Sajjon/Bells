@@ -9,67 +9,6 @@ import SwiftCheck
 import FileCheck
 #endif
 
-func secureRandomBytes(byteCount: Int) -> [UInt8] {
-    var bytes = [UInt8](repeating: 0, count: byteCount)
-    let result = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
-    
-    guard result == errSecSuccess else {
-        fatalError("Problem generating random bytes")
-    }
-    
-    return bytes
-}
-
-extension Fp {
-    static func random() -> Self {
-        Self.init(value: .random(byteCount: 48))
-    }
-}
-extension BigInt {
-    
-    static func random(byteCount: Int = 48) -> Self {
-        let uintByteCount = Word.bitWidth / 8
-        precondition(byteCount.isMultiple(of:  uintByteCount))
-        let bytes = secureRandomBytes(byteCount: byteCount)
-        return Self(bytes: bytes)
-    }
-    
-    init(bytes: [UInt8]) {
-        let uintByteCount = Word.bitWidth / 8
-        precondition(bytes.count.isMultiple(of:  uintByteCount))
-        
-        let words: [Word] = bytes.chunks(ofCount: uintByteCount).map { chunk in
-            chunk.withUnsafeBytes {
-                $0.load(as: Word.self)
-            }
-        }
-        self.init(words: words)
-    }
-}
-
-
-
-
-
-
-extension BigInt: Arbitrary {
-    public static var arbitrary: Gen<Self> {
-        .compose { composer in
-            let bytes = (0..<48).map { _ in composer.generate(using: UInt8.arbitrary) }
-            return Self(bytes: bytes)
-        }
-    }
-}
-
-extension Fp: Arbitrary {
-    public static var arbitrary: Gen<Self> {
-        .compose { composer in
-            let value = composer.generate(using: BigInt.arbitrary)
-            return Self.init(value: value)
-        }
-    }
-}
-
 final class FpTests: XCTestCase {
     
     
@@ -240,48 +179,103 @@ final class FpTests: XCTestCase {
         XCTAssertNil(Fp(value: BigInt("72057594037927816", radix: 10)!).sqrt())
     }
     
+    func test_fp_div() {
+        property("division by one equality") <- forAll { (a: Fp) in
+            (a / Fp.one) == a
+        }
+        
+        property("a / a == 1") <- forAll { (a: Fp) in
+            !a.isZero ==> {
+                (a / a) == Fp.one
+            }
+        }
+    }
     
-    /*
+    
+    func test_fp_zero_divided_eq() {
+        property("division zero divided equality") <- forAll { (a: Fp) in
+            !a.isZero ==> {
+                (Fp.zero / a) == Fp.zero
+            }
+        }
+    }
+    
+    func test_fp_division_distributivity() {
+        property("division distributivity") <- forAll { (a: Fp) in
+            exists { (b: Fp) in
+                exists { (c: Fp) in
+                    !c.isZero ==> {
+                        (a + b / c) == (a / c + b / c)
+                    }
+                }
+            }
+        }
+    }
+    
+    func test_fp_division_and_multiplication_equality() {
+        property("division and multiplication equality") <- forAll { (a: Fp) in
+            exists { (b: Fp) in
+                !b.isZero ==> {
+                    (a / b) == (try! a * b.inverted())
+                }
+            }
+        }
+    }
+}
 
-       describe('div', () => {
-         it('division by one equality', () => {
-           fc.assert(
-             fc.property(fc.bigInt(1n, Fp.ORDER - 1n), (num) => {
-               const a = new Fp(num);
-               expect(a.div(Fp.ONE)).toEqual(a);
-               expect(a.div(a)).toEqual(Fp.ONE);
-             })
-           );
-         });
-         it('division by zero equality', () => {
-           fc.assert(
-             fc.property(FC_BIGINT, (num) => {
-               const a = new Fp(num);
-               expect(Fp.ZERO.div(a)).toEqual(Fp.ZERO);
-             })
-           );
-         });
-         it('division distributivity', () => {
-           fc.assert(
-             fc.property(FC_BIGINT, FC_BIGINT, FC_BIGINT, (num1, num2, num3) => {
-               const a = new Fp(num1);
-               const b = new Fp(num2);
-               const c = new Fp(num3);
-               expect(a.add(b).div(c)).toEqual(a.div(c).add(b.div(c)));
-             })
-           );
-         });
-         it('division and multiplication equality', () => {
-           fc.assert(
-             fc.property(FC_BIGINT, FC_BIGINT, (num1, num2) => {
-               const a = new Fp(num1);
-               const b = new Fp(num2);
-               expect(a.div(b)).toEqual(a.multiply(b.invert()));
-             })
-           );
-         });
-       })
-     });
 
-     */
+func secureRandomBytes(byteCount: Int) -> [UInt8] {
+    var bytes = [UInt8](repeating: 0, count: byteCount)
+    let result = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+    
+    guard result == errSecSuccess else {
+        fatalError("Problem generating random bytes")
+    }
+    
+    return bytes
+}
+
+extension Fp {
+    static func random() -> Self {
+        Self.init(value: .random(byteCount: 48))
+    }
+}
+extension BigInt {
+    
+    static func random(byteCount: Int = 48) -> Self {
+        let uintByteCount = Word.bitWidth / 8
+        precondition(byteCount.isMultiple(of:  uintByteCount))
+        let bytes = secureRandomBytes(byteCount: byteCount)
+        return Self(bytes: bytes)
+    }
+    
+    init(bytes: [UInt8]) {
+        let uintByteCount = Word.bitWidth / 8
+        precondition(bytes.count.isMultiple(of:  uintByteCount))
+        
+        let words: [Word] = bytes.chunks(ofCount: uintByteCount).map { chunk in
+            chunk.withUnsafeBytes {
+                $0.load(as: Word.self)
+            }
+        }
+        self.init(words: words)
+    }
+}
+
+extension BigInt: Arbitrary {
+    public static var arbitrary: Gen<Self> {
+        .compose { composer in
+            let bytes = (0..<48).map { _ in composer.generate(using: UInt8.arbitrary) }
+            return Self(bytes: bytes)
+        }
+    }
+}
+
+extension Fp: Arbitrary {
+    public static var arbitrary: Gen<Self> {
+        .compose { composer in
+            let value = composer.generate(using: BigInt.arbitrary)
+            return Self.init(value: value)
+        }
+    }
 }
