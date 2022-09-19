@@ -9,19 +9,72 @@ import Foundation
 import BigInt
 
 /// Finite field over `p`.
-public struct Fp: Field {
+public struct Fp: Field, CustomDebugStringConvertible {
     public let value: BigInt
     init(value: BigInt) {
-        self.value = value % Self.order
+        self.value = mod(a: value, b: Self.order)//value % Self.order
     }
 }
 
 // MARK: CustomStringConvertible
 public extension Fp {
     var description: String {
-        String(value, radix: 16)
-            .padding(toLength: 96, withPad: "0", startingAt: 0)
+        toDecimalString(pad: false)
     }
+    
+    func toDecimalString(pad: Bool = false) -> String {
+        toString(radix: 10, padToLength: pad ? 115 : nil)
+    }
+    
+    func toHexString(pad: Bool = true) -> String {
+        toString(radix: 10, padToLength: pad ? 96 : nil)
+    }
+    
+    var debugDescription: String {
+        toHexString(pad: true)
+    }
+    
+    func toString(radix: Int = 16, padToLength: Int?) -> String {
+        let s = String(value, radix: radix)
+        guard let padToLength else { return s }
+        let padAmount = padToLength - s.count
+        if padAmount <= 0 {
+            return s
+        }
+        return String(repeating: "0", count: padAmount) + s
+    }
+}
+
+func mod(a: BigInt, b: BigInt) -> BigInt {
+    let res = a % b
+    return res >= 0 ? res : b + res
+}
+
+/// Inverses number over modulo
+func invert(number: BigInt, modulo: BigInt) throws -> BigInt {
+    if number.isZero || modulo <= 0 {
+        struct ExpectedPositiveInteger: Error {}
+        throw ExpectedPositiveInteger()
+    }
+    // Eucledian GCD https://brilliant.org/wiki/extended-euclidean-algorithm/
+    var a = mod(a: number, b: modulo)
+    var b = modulo
+    var x: BigInt = 0
+    var y: BigInt = 1
+    var u: BigInt = 1
+    var v: BigInt = 0
+    while a != 0 {
+        let (q, r) = b.quotientAndRemainder(dividingBy: a)
+        let m = x - u * q
+        let n = y - v * q
+        b = a; a = r; x = u; y = v; u = m; v = n;
+    }
+    let gcd = b
+    guard gcd == 1 else {
+        struct NoInverseExists: Error {}
+        throw NoInverseExists()
+    }
+    return mod(a: x, b: modulo)
 }
 
 public extension Fp {
@@ -39,10 +92,7 @@ public extension Fp {
     }
     
     func inverted() throws -> Self {
-        guard let inverse = value.inverse(order) else {
-            struct NoInverseExists: Error {}
-            throw NoInverseExists()
-        }
+        let inverse = try invert(number: value, modulo: order)
         return Self(value: inverse)
     }
     
@@ -58,16 +108,16 @@ public extension Fp {
        op(lhs, rhs, *)
     }
     
-    static func / (lhs: Self, rhs: Self) -> Self {
-        op(lhs, rhs, /)
+    static func / (lhs: Self, rhs: Self) throws -> Self {
+        try lhs * rhs.inverted()
     }
     
     static func * (lhs: Self, rhs: BigInt) -> Self {
         Self.init(value: lhs.value * rhs)
     }
     
-    static func / (lhs: Self, rhs: BigInt) -> Self {
-        Self.init(value: lhs.value / rhs)
+    static func / (lhs: Self, rhs: BigInt) throws -> Self {
+        try lhs / Self(value: rhs)
     }
     
     func squared() throws -> Self {

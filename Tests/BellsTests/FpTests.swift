@@ -9,167 +9,9 @@ import SwiftCheck
 import FileCheck
 #endif
 
-final class FpTests: XCTestCase {
-    
-    
-    func test_fp_equality() {
-        property("Fp Equality is Reflexive") <- forAll { (a: Fp) in
-            a == a
-        }
-    }
-    
-    
-    func test_fp_inequality() {
-        XCTAssert(fileCheckOutput(withPrefixes: ["INEQUALITY"]) {
-            // INEQUALITY: *** Passed 100 tests
-            // INEQUALITY-NEXT: .
-            property("Fp inequality") <- forAll { (a: Fp) in
-                exists { (b: Fp) in
-                    (a != b)
-                }
-            }
-        })
-        
-    }
-    
-    func test_fp_addition() {
-        XCTAssert(fileCheckOutput(withPrefixes: ["ADDITION_COMMUTATIVITY"]) {
-            // ADDITION_COMMUTATIVITY: *** Passed 100 tests
-            // ADDITION_COMMUTATIVITY-NEXT: .
-            property("commutativity") <- forAll { (a: Fp) in
-                exists { (b: Fp) in
-                    (a + b) == (b + a)
-                }
-            }
-        })
-        
-        XCTAssert(fileCheckOutput(withPrefixes: ["ADDITION_ASSOCIATIVITY"]) {
-            // ADDITION_ASSOCIATIVITY: *** Passed 100 tests
-            // ADDITION_ASSOCIATIVITY-NEXT: .
-            property("associativity") <- forAll { (a: Fp) in
-                exists { (b: Fp) in
-                    exists { (c: Fp) in
-                        (a + (b + c)) == ((a + b) + c)
-                    }
-                }
-            }
-        })
-        
-        
-        property("identity") <- forAll { (a: Fp) in
-            (a + Fp.zero) == a
-        }
-    }
-    
-    func test_fp_subtraction() {
-        
-        property("identity") <- forAll { (a: Fp) in
-            (a - Fp.zero) == a
-        }
-        
-        property("a - a == 0") <- forAll { (a: Fp) in
-            (a - a) == Fp.zero
-        }
-    }
-    
-    func test_fp_negated_equality() {
-        XCTAssert(fileCheckOutput(withPrefixes: ["NEGATED_EQUALITY"]) {
-            // NEGATED_EQUALITY: *** Passed 100 tests
-            // NEGATED_EQUALITY-NEXT: .
-            property("negated_eq") <- forAll { (a: Fp) in
-                exists { (b: Fp) in
-                    (Fp.zero - a == a.negated())
-                    ^&&^
-                    ((a - b) == (a + b.negated()))
-                    ^&&^
-                    ((a - b) == (a + b * Fp.one.negated()))
-                }
-            }
-        })
-    }
-    
-    func test_fp_negated() {
-        property("a.negated == 0-a") <- forAll { (a: Fp) in
-            a.negated() == (Fp.zero - a)
-        }
-        property("a.negated == a * 1.negated") <- forAll { (a: Fp) in
-            a.negated() == (a * Fp.one.negated())
-        }
-    }
-    
-    func test_multiplication() {
-        XCTAssert(fileCheckOutput(withPrefixes: ["MULTIPLICATION_COMMUTATIVITY"]) {
-            // MULTIPLICATION_COMMUTATIVITY: *** Passed 100 tests
-            // MULTIPLICATION_COMMUTATIVITY-NEXT: .
-            property("commutativity") <- forAll { (a: Fp) in
-                exists { (b: Fp) in
-                    (a * b) == (b * a)
-                }
-            }
-        })
-        
-        XCTAssert(fileCheckOutput(withPrefixes: ["MULTIPLICATION_ASSOCIATIVITY"]) {
-            // MULTIPLICATION_ASSOCIATIVITY: *** Passed 100 tests
-            // MULTIPLICATION_ASSOCIATIVITY-NEXT: .
-            property("associativity") <- forAll { (a: Fp) in
-                exists { (b: Fp) in
-                    exists { (c: Fp) in
-                        (a * (b * c)) == ((a * b) * c)
-                    }
-                }
-            }
-        })
-        
-        
-        XCTAssert(fileCheckOutput(withPrefixes: ["MULTIPLICATION_DISTRIBUTIVITY"]) {
-            // MULTIPLICATION_DISTRIBUTIVITY: *** Passed 100 tests
-            // MULTIPLICATION_DISTRIBUTIVITY-NEXT: .
-            property("distributivity") <- forAll { (a: Fp) in
-                exists { (b: Fp) in
-                    exists { (c: Fp) in
-                        (a * (b + c)) == ((a * b) + (a * c))
-                    }
-                }
-            }
-        })
-        
-        property("add equality") <- forAll { (a: Fp) in
-            (a * Fp.zero) == Fp.zero
-            ^&&^
-            (a * Fp(value: 0)) == Fp.zero
-            ^&&^
-            (a * Fp.one) == a
-            ^&&^
-            (a * Fp(value: 1)) == a
-            ^&&^
-            (a * Fp(value: 2)) == (a + a)
-            ^&&^
-            (a * Fp(value: 3)) == (a + a + a)
-            ^&&^
-            (a * Fp(value: 4)) == (a + a + a + a)
-        }
-    }
-    
-    func test_fp_square() throws {
-        property("square equality") <- forAll { (a: Fp) in
-            (try a.squared()) == (a * a)
-        }
-    }
-    
-    func test_fp_pow_eq() throws {
-        property("pow equality") <- forAll { (a: Fp) in
-            (try a.pow(n: 0) == Fp.one)
-            ^&&^
-            (try a.pow(n: 1) == a)
-            ^&&^
-            (try a.pow(n: 2) == (a * a))
-            ^&&^
-            (try a.pow(n: 3) == (a * a * a))
-            
-        }
-    }
-    
-    func test_fp_sqrt() throws {
+
+final class FpTests: FieldTests<Fp> {
+    func test_field_sqrt() throws {
         let sqr1 = Fp(value: BigInt("300855555557", radix: 10)!)
         let sqrt = try XCTUnwrap(sqr1.sqrt())
         XCTAssertEqual(
@@ -179,97 +21,20 @@ final class FpTests: XCTestCase {
         XCTAssertNil(Fp(value: BigInt("72057594037927816", radix: 10)!).sqrt())
     }
     
-    func test_fp_div() {
-        property("division by one equality") <- forAll { (a: Fp) in
-            (a / Fp.one) == a
-        }
-        
-        property("a / a == 1") <- forAll { (a: Fp) in
-            !a.isZero ==> {
-                (a / a) == Fp.one
-            }
+    func test_multiplication_with_larger_than_one() {
+        property("add equality") <- forAll { (a: Fp) in
+            (a * Fp(value: 2)) == (a + a)
+            ^&&^
+            (a * Fp(value: 3)) == (a + a + a)
+            ^&&^
+            (a * Fp(value: 4)) == (a + a + a + a)
         }
     }
-    
-    
-    func test_fp_zero_divided_eq() {
-        property("division zero divided equality") <- forAll { (a: Fp) in
-            !a.isZero ==> {
-                (Fp.zero / a) == Fp.zero
-            }
-        }
-    }
-    
-    func test_fp_division_distributivity() {
-        property("division distributivity") <- forAll { (a: Fp) in
-            exists { (b: Fp) in
-                exists { (c: Fp) in
-                    !c.isZero ==> {
-                        (a + b / c) == (a / c + b / c)
-                    }
-                }
-            }
-        }
-    }
-    
-    func test_fp_division_and_multiplication_equality() {
-        property("division and multiplication equality") <- forAll { (a: Fp) in
-            exists { (b: Fp) in
-                !b.isZero ==> {
-                    (a / b) == (try! a * b.inverted())
-                }
-            }
-        }
-    }
+
 }
 
 
-func secureRandomBytes(byteCount: Int) -> [UInt8] {
-    var bytes = [UInt8](repeating: 0, count: byteCount)
-    let result = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
-    
-    guard result == errSecSuccess else {
-        fatalError("Problem generating random bytes")
-    }
-    
-    return bytes
-}
 
-extension Fp {
-    static func random() -> Self {
-        Self.init(value: .random(byteCount: 48))
-    }
-}
-extension BigInt {
-    
-    static func random(byteCount: Int = 48) -> Self {
-        let uintByteCount = Word.bitWidth / 8
-        precondition(byteCount.isMultiple(of:  uintByteCount))
-        let bytes = secureRandomBytes(byteCount: byteCount)
-        return Self(bytes: bytes)
-    }
-    
-    init(bytes: [UInt8]) {
-        let uintByteCount = Word.bitWidth / 8
-        precondition(bytes.count.isMultiple(of:  uintByteCount))
-        
-        let words: [Word] = bytes.chunks(ofCount: uintByteCount).map { chunk in
-            chunk.withUnsafeBytes {
-                $0.load(as: Word.self)
-            }
-        }
-        self.init(words: words)
-    }
-}
-
-extension BigInt: Arbitrary {
-    public static var arbitrary: Gen<Self> {
-        .compose { composer in
-            let bytes = (0..<48).map { _ in composer.generate(using: UInt8.arbitrary) }
-            return Self(bytes: bytes)
-        }
-    }
-}
 
 extension Fp: Arbitrary {
     public static var arbitrary: Gen<Self> {

@@ -13,11 +13,13 @@ public protocol Field: AdditiveArithmetic, CustomStringConvertible {
     func negated() -> Self
     func inverted() throws -> Self
     static func * (lhs: Self, rhs: Self) -> Self
-    static func / (lhs: Self, rhs: Self) -> Self
+    static func / (lhs: Self, rhs: Self) throws -> Self
     static func * (lhs: Self, rhs: BigInt) -> Self
-    static func / (lhs: Self, rhs: BigInt) -> Self
+    static func / (lhs: Self, rhs: BigInt) throws -> Self
     func squared() throws -> Self
     func pow(n: BigInt) throws -> Self
+    
+    static var one: Self { get }
 }
 public extension Field {
     var isZero: Bool { self == .zero }
