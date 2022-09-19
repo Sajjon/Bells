@@ -1,0 +1,137 @@
+//
+//  File.swift
+//  
+//
+//  Created by Alexander Cyon on 2022-09-18.
+//
+
+import Foundation
+import BigInt
+
+/// Finite field over `p`.
+public struct Fp: Field {
+    public let value: BigInt
+    init(value: BigInt) {
+        self.value = value % Self.order
+    }
+}
+
+// MARK: CustomStringConvertible
+public extension Fp {
+    var description: String {
+        String(value, radix: 16)
+            .padding(toLength: 96, withPad: "0", startingAt: 0)
+    }
+}
+
+public extension Fp {
+    
+    static let order = Curve.P
+    var order: BigInt { Self.order }
+    
+    static let zero = Self(value: 0)
+    static let one = Self(value: 1)
+    
+    func negated() -> Self {
+        var valueCopy = value
+        valueCopy.negate()
+        return Self(value: valueCopy)
+    }
+    
+    func inverted() throws -> Self {
+        guard let inverse = value.inverse(order) else {
+            struct NoInverseExists: Error {}
+            throw NoInverseExists()
+        }
+        return Self(value: inverse)
+    }
+    
+    static func + (lhs: Self, rhs: Self) -> Self {
+        op(lhs, rhs, +)
+    }
+    
+    static func - (lhs: Self, rhs: Self) -> Self {
+        op(lhs, rhs, -)
+    }
+    
+    static func * (lhs: Self, rhs: Self) -> Self {
+       op(lhs, rhs, *)
+    }
+    
+    static func / (lhs: Self, rhs: Self) -> Self {
+        op(lhs, rhs, /)
+    }
+    
+    static func * (lhs: Self, rhs: BigInt) -> Self {
+        Self.init(value: lhs.value * rhs)
+    }
+    
+    static func / (lhs: Self, rhs: BigInt) -> Self {
+        Self.init(value: lhs.value / rhs)
+    }
+    
+    func squared() throws -> Self {
+       try pow(n: 2)
+    }
+    
+    func pow(n: BigInt) throws -> Self {
+        try .init(value: powMod(num: value, power: n, modulo: order))
+    }
+    
+    // square root computation for p ≡ 3 (mod 4)
+    // a^((p-3)/4)) ≡ 1/√a (mod p)
+    // √a ≡ a * 1/√a ≡ a^((p+1)/4) (mod p)
+    // It's possible to unwrap the exponentiation, but (P+1)/4 has 228 1's out of 379 bits.
+    // https://eprint.iacr.org/2012/685.pdf
+    func sqrt() -> Self? {
+        guard let root = try? pow(n: (order + 1) / 4) else {
+            return nil
+        }
+        guard let rootSquared = try? root.squared() else { return nil }
+        if rootSquared != self { return nil }
+        return root
+    }
+}
+
+/**
+ * Efficiently exponentiate num to power and do modular division.
+ * @example
+ * powMod(2n, 6n, 11n) // 64n % 11n == 9n
+ */
+func powMod(num: BigInt, power: BigInt, modulo: BigInt) throws -> BigInt {
+    guard modulo > 0, power >= 0 else {
+        struct ExpectedPowerAndModuloGr0: Error {}
+        throw ExpectedPowerAndModuloGr0()
+    }
+    if modulo == 1 { return 0 }
+    var res: BigInt = 1
+    var num = num
+    var power = power
+    while power > 0 {
+        if ((power & 1) != 0) {
+            res = (res * num) % modulo
+        }
+        num = (num * num) % modulo
+        power >>= 1
+    }
+    return res
+    
+}
+//export function powMod(num: bigint, power: bigint, modulo: bigint) {
+//    if (modulo <= 0n || power < 0n) throw new Error('Expected power/modulo > 0');
+//    if (modulo === 1n) return 0n;
+//    let res = 1n;
+//    while (power > 0n) {
+//        if (power & 1n) res = (res * num) % modulo;
+//        num = (num * num) % modulo;
+//        power >>= 1n;
+//    }
+//    return res;
+//}
+
+private extension Fp {
+    static func op(_ lhs: Self, _ rhs: Self, _ operation: (BigInt, BigInt) -> BigInt) -> Self {
+        .init(value: operation(lhs.value, rhs.value))
+    }
+}
+
