@@ -105,71 +105,20 @@ final class Fp2Tests: FieldTests<Fp> {
     // Test from: https://github.com/zkcrypto/bls12_381/blob/080eaa74ec0e394377caa1ba302c8c121df08b07/src/fp2.rs#L674-L754
     func test_sqrt() throws {
         
-        let a: Fp2 = "1488924004771393321054797166853618474668089414631333405711627789629391903630694737978065425271543178763948256226639*u + 784063022264861764559335808165825052288770346101304131934508881646553551234697082295473567906267937225174620141295"
+        func doTestSqrtSquared(of fp: Fp2) throws {
+            XCTAssertEqual(try fp.sqrt().squared(), fp)
+        }
+        
+        try doTestSqrtSquared(of: "1488924004771393321054797166853618474668089414631333405711627789629391903630694737978065425271543178763948256226639*u + 784063022264861764559335808165825052288770346101304131934508881646553551234697082295473567906267937225174620141295")
+        
+        
+        //  b = 5 , generator of the p-1 order multiplicative subgroup
+        try doTestSqrtSquared(of: "0*u + 1367714067195338330005789785234579356639813143898609672616051936515282693167588605474094216909910046701175380147690")
       
-        XCTAssertEqual(try a.sqrt().squared(), a)
-        /*
-
-
-             // b = 5, which is a generator of the p - 1 order
-             // multiplicative subgroup
-             let b = Fp2 {
-                 c0: Fp::from_raw_unchecked([
-                     0x6631_0000_0010_5545,
-                     0x2114_0040_0eec_000d,
-                     0x3fa7_af30_c820_e316,
-                     0xc52a_8b8d_6387_695d,
-                     0x9fb4_e61d_1e83_eac5,
-                     0x005c_b922_afe8_4dc7,
-                 ]),
-                 c1: Fp::zero(),
-             };
-
-             assert_eq!(b.sqrt().unwrap().square(), b);
-
-             // c = 25, which is a generator of the (p - 1) / 2 order
-             // multiplicative subgroup
-             let c = Fp2 {
-                 c0: Fp::from_raw_unchecked([
-                     0x44f6_0000_0051_ffae,
-                     0x86b8_0141_9948_0043,
-                     0xd715_9952_f1f3_794a,
-                     0x755d_6e3d_fe1f_fc12,
-                     0xd36c_d6db_5547_e905,
-                     0x02f8_c8ec_bf18_67bb,
-                 ]),
-                 c1: Fp::zero(),
-             };
-
-             assert_eq!(c.sqrt().unwrap().square(), c);
-
-             // 2155129644831861015726826462986972654175647013268275306775721078997042729172900466542651176384766902407257452753362*u + 2796889544896299244102912275102369318775038861758288697415827248356648685135290329705805931514906495247464901062529
-             // is nonsquare.
-             assert!(bool::from(
-                 Fp2 {
-                     c0: Fp::from_raw_unchecked([
-                         0xc5fa_1bc8_fd00_d7f6,
-                         0x3830_ca45_4606_003b,
-                         0x2b28_7f11_04b1_02da,
-                         0xa7fb_30f2_8230_f23e,
-                         0x339c_db9e_e953_dbf0,
-                         0x0d78_ec51_d989_fc57,
-                     ]),
-                     c1: Fp::from_raw_unchecked([
-                         0x27ec_4898_cf87_f613,
-                         0x9de1_394e_1abb_05a5,
-                         0x0947_f85d_c170_fc14,
-                         0x586f_bc69_6b61_14b7,
-                         0x2b34_75a4_077d_7169,
-                         0x13e1_c895_cc4b_6c22,
-                     ])
-                 }
-                 .sqrt()
-                 .is_none()
-             ));
-         }
-
-        */
+        // c = 25, which is a generator of the (p - 1) / 2 order multiplicative subgroup
+        try doTestSqrtSquared(of: "0*u + 25")
+        
+        XCTAssertThrowsError(try Fp2("2155129644831861015726826462986972654175647013268275306775721078997042729172900466542651176384766902407257452753362*u + 2796889544896299244102912275102369318775038861758288697415827248356648685135290329705805931514906495247464901062529").sqrt())
     }
 }
 

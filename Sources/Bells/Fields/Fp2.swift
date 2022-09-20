@@ -115,7 +115,6 @@ public extension Fp2 {
     // https://github.com/supranational/blst/blob/aae0c7d70b799ac269ff5edf29d8191dbd357876/src/exp2.c#L1
     // Inspired by https://github.com/dalek-cryptography/curve25519-dalek/blob/17698df9d4c834204f83a3574143abacb4fc81a5/src/field.rs#L99
     func sqrt() throws -> Fp2 {
-        print("self: \(self)")
         let candidateSqrt = try pow(n: ((Self.order + 8) / 16))
         let check = try candidateSqrt.squared() / self
         let R = Self.rootsOfUnity

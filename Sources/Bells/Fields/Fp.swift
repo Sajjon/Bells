@@ -23,25 +23,19 @@ public extension Fp {
     }
     
     func toDecimalString(pad: Bool = false) -> String {
-        toString(radix: 10, padToLength: pad ? 115 : nil)
+        toString(radix: 10, pad: pad ? .toLength(115) : nil)
     }
     
     func toHexString(pad: Bool = true) -> String {
-        toString(radix: 10, padToLength: pad ? 96 : nil)
+        toString(radix: 16, pad: pad ? .toLength(96) : nil)
     }
     
     var debugDescription: String {
         toHexString(pad: true)
     }
     
-    func toString(radix: Int = 16, padToLength: Int?) -> String {
-        let s = String(value, radix: radix)
-        guard let padToLength else { return s }
-        let padAmount = padToLength - s.count
-        if padAmount <= 0 {
-            return s
-        }
-        return String(repeating: "0", count: padAmount) + s
+    func toString(radix: Int = 16, pad: Pad?) -> String {
+        value.toString(radix: radix, pad: pad)
     }
 }
 
