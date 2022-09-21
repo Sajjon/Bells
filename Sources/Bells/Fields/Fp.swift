@@ -9,7 +9,7 @@ import Foundation
 import BigInt
 
 /// Finite field over `p`.
-public struct Fp: Field, CustomDebugStringConvertible {
+public struct Fp: FiniteField, CustomDebugStringConvertible {
     public let value: BigInt
     init(value: BigInt) {
         self.value = mod(a: value, b: Self.order)//value % Self.order

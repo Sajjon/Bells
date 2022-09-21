@@ -9,7 +9,7 @@ import Foundation
 import BigInt
 
 /// Fp₂ over complex plane
-public struct Fp2: Field, CustomDebugStringConvertible {
+public struct Fp2: FiniteField, CustomDebugStringConvertible {
     /// Real part, aka `c0`
     public let real: Fp
     
@@ -145,6 +145,13 @@ public extension Fp2 {
 internal extension Fp2 {
     /// For `roots of unity`.
     static let rv1 = BigInt("6af0e0437ff400b6831e36d6bd17ffe48395dabc2d3435e77f76e17009241c5ee67992f72ec05f4c81084fbede3cc09", radix: 16)!
+    
+    /// Finite extension field over irreducible polynominal.
+    /// `Fp(u) / (u² - β) where β = -1`
+    static let frobeniusCoefficients: [Fp] = [
+        BigInt(1),
+        BigInt("1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaaa", radix: 16)!
+    ].map(Fp.init)
 }
 
 
@@ -169,6 +176,23 @@ public extension Fp2 {
         return tuples.map { Self(real: Fp(value: $0.0), imaginary: Fp(value: $0.1)) }
     }()
     
+    /// Multiply by: `u + 1`
+    func mulByNonresidue() -> Self {
+        let c0 = real
+        let c1 = imaginary
+        return .init(
+            real: c0 - c1,
+            imaginary: c0 + c1
+        )
+    }
+    
+    /// Raises to `q**i -th power`
+     func frobeniusMap(power: Int) -> Self {
+         .init(
+            real: real,
+            imaginary: imaginary * Self.frobeniusCoefficients[power % Self.frobeniusCoefficients.count]
+        )
+     }
 }
 
 private extension Fp2 {

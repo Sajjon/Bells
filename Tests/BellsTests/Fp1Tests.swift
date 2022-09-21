@@ -9,8 +9,8 @@ import SwiftCheck
 import FileCheck
 #endif
 
-
-final class FpTests: FieldTests<Fp> {
+typealias Fp1Tests = FpTests
+final class FpTests: FiniteFieldTest<Fp> {
     func test_field_sqrt() throws {
         let sqr1 = Fp(value: BigInt("300855555557", radix: 10)!)
         let sqrt = try XCTUnwrap(sqr1.sqrt())
@@ -32,9 +32,6 @@ final class FpTests: FieldTests<Fp> {
     }
 
 }
-
-
-
 
 extension Fp: Arbitrary {
     public static var arbitrary: Gen<Self> {

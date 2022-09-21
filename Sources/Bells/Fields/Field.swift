@@ -21,6 +21,12 @@ public protocol Field: AdditiveArithmetic, CustomStringConvertible {
     
     static var one: Self { get }
 }
+
 public extension Field {
     var isZero: Bool { self == .zero }
+}
+
+
+public protocol FiniteField: Field {
+    static var order: BigInt { get }
 }
