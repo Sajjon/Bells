@@ -40,7 +40,7 @@ final class Fp2Tests: FiniteFieldTest<Fp> {
         
         //  b = 5 , generator of the p-1 order multiplicative subgroup
         try doTestSqrtSquared(of: "0*u + 1367714067195338330005789785234579356639813143898609672616051936515282693167588605474094216909910046701175380147690")
-      
+        
         // c = 25, which is a generator of the (p - 1) / 2 order multiplicative subgroup
         try doTestSqrtSquared(of: "0*u + 25")
         
@@ -53,57 +53,24 @@ final class Fp2Tests: FiniteFieldTest<Fp> {
             c1: "012d1137b8a6a8374e464dea5bcfd41eb3f8afc0ee248cadbe203411c66fb3a5946ae52d684fa7ed977df6efcdaee0db"
         )
         
-        let f = a.frobeniusMap(power: 0)
+        let b = a.frobeniusMap(power: 0)
+        XCTAssertEqual(a, b)
         
-        XCTAssertEqual(a, f)
+        let c = b.frobeniusMap(power: 1)
+        XCTAssertEqual(
+            c,
+            Fp2(
+                real: b.real,
+                imaginary: .init(value: BigInt("18d400b280d93e62fcd559cbe77bd8b8b07e9bc405608611a9109e8f3041427e8a411ad149045812228109103250c9d0", radix: 16)!)
+            )
+        )
         
+        let d = c.frobeniusMap(power: 1)
+        XCTAssertEqual(d, a)
         
-        /*
-         it('frobenius', () => {
-  
-             let a = Fp2.fromBigTuple([
-               0x00f8d295b2ded9dcccc649c4b9532bf3b966ce3bc2108b138b1a52e0a90f59ed11e59ea221a3b6d22d0078036923ffc7n,
-               0x012d1137b8a6a8374e464dea5bcfd41eb3f8afc0ee248cadbe203411c66fb3a5946ae52d684fa7ed977df6efcdaee0dbn,
-             ]);
-             a = a.frobeniusMap(0);
-             expect(
-               a.equals(
-                 Fp2.fromBigTuple([
-                   0x00f8d295b2ded9dcccc649c4b9532bf3b966ce3bc2108b138b1a52e0a90f59ed11e59ea221a3b6d22d0078036923ffc7n,
-                   0x012d1137b8a6a8374e464dea5bcfd41eb3f8afc0ee248cadbe203411c66fb3a5946ae52d684fa7ed977df6efcdaee0dbn,
-                 ])
-               )
-             ).toBe(true);
-             a = a.frobeniusMap(1);
-             expect(
-               a.equals(
-                 Fp2.fromBigTuple([
-                   0x00f8d295b2ded9dcccc649c4b9532bf3b966ce3bc2108b138b1a52e0a90f59ed11e59ea221a3b6d22d0078036923ffc7n,
-                   0x18d400b280d93e62fcd559cbe77bd8b8b07e9bc405608611a9109e8f3041427e8a411ad149045812228109103250c9d0n,
-                 ])
-               )
-             ).toBe(true);
-             a = a.frobeniusMap(1);
-             expect(
-               a.equals(
-                 Fp2.fromBigTuple([
-                   0x00f8d295b2ded9dcccc649c4b9532bf3b966ce3bc2108b138b1a52e0a90f59ed11e59ea221a3b6d22d0078036923ffc7n,
-                   0x012d1137b8a6a8374e464dea5bcfd41eb3f8afc0ee248cadbe203411c66fb3a5946ae52d684fa7ed977df6efcdaee0dbn,
-                 ])
-               )
-             ).toBe(true);
-             a = a.frobeniusMap(2);
-             expect(
-               a.equals(
-                 Fp2.fromBigTuple([
-                   0x00f8d295b2ded9dcccc649c4b9532bf3b966ce3bc2108b138b1a52e0a90f59ed11e59ea221a3b6d22d0078036923ffc7n,
-                   0x012d1137b8a6a8374e464dea5bcfd41eb3f8afc0ee248cadbe203411c66fb3a5946ae52d684fa7ed977df6efcdaee0dbn,
-                 ])
-               )
-             ).toBe(true);
-           });
-         */
+        XCTAssertEqual(d.frobeniusMap(power: 2), d)
     }
+    
 }
 
 extension Fp2: Arbitrary {
