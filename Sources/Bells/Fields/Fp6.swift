@@ -23,12 +23,16 @@ public extension Fp6 {
     
     var description: String {
         """
-        hej
+        c0: \(c0),
+        c1: \(c1),
+        c2: \(c2)
         """
     }
     var debugDescription: String {
         """
-        hej
+        c0: \(c0.debugDescription),
+        c1: \(c1.debugDescription),
+        c2: \(c2.debugDescription)
         """
     }
 }
@@ -215,11 +219,11 @@ public extension Fp6 {
         let t4 = c2.squared()
        
         return Self(
-            c0: (t3.mulByNonresidue() + t0), // T3 * (u + 1) + T0
-            c1: (t4.mulByNonresidue() + t1), // T4 * (u + 1) + T1
+            c0: t3.mulByNonresidue() + t0, // T3 * (u + 1) + T0
+            c1: t4.mulByNonresidue() + t1, // T4 * (u + 1) + T1
             
             // T1 + (c0 - c1 + c2)² + T3 - T0 - T4
-            c2: (t1 + (c0 - c1 + c2).squared() + t3 - t0 - t4)
+            c2: t1 + (c0 - c1 + c2).squared() + t3 - t0 - t4
         )
     }
     
