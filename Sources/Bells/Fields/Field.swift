@@ -20,10 +20,14 @@ public protocol Field: AdditiveArithmetic, CustomStringConvertible {
     func pow(n: BigInt) throws -> Self
     
     static var one: Self { get }
+    static prefix func - (this: Self) -> Self
 }
 
 public extension Field {
     var isZero: Bool { self == .zero }
+    static prefix func - (this: Self) -> Self {
+        this.negated()
+    }
 }
 
 

@@ -11,14 +11,17 @@ import BigInt
 /// Fp₂ over complex plane
 public struct Fp2: FiniteField, CustomDebugStringConvertible {
     /// Real part, aka `c0`
-    public let real: Fp
+    public let real: Fp; public var c0: Fp { real }
     
     /// Imaginary part, aka `c1`
-    public let imaginary: Fp
+    public let imaginary: Fp; public var c1: Fp { imaginary }
     
     init(real: Fp, imaginary: Fp) {
         self.real = real
         self.imaginary = imaginary
+    }
+    init(c0: Fp, c1: Fp) {
+        self.init(real: c0, imaginary: c1)
     }
 }
 

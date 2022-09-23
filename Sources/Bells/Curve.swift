@@ -19,8 +19,8 @@ import BigInt
 /// Fp₂(v) / (v³ - ξ) where ξ = u + 1
 /// Fp₆(w) / (w² - γ) where γ = v
 /// ```
-public enum Curve {
-
+public enum Curve {}
+public extension Curve {
     /// G1 is the order-q subgroup of `E1(Fp) : y² = x³ + 4, #E1(Fp) = h1q`
     /// where characteristic: `z + (z⁴ - z² + 1)(z - 1)²/3`
     static let P = BigInt("1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab", radix: 16)!
@@ -43,7 +43,7 @@ public enum Curve {
     /// where Fp2 is Fp[√−1]/(x2+1). #E2(Fp2 ) = h2q, where
     /// G² - 1
     /// h2q
-    static let P2 = BigInt("1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab", radix: 16)!.power(2) - 1
+    static let P2 = P.power(2) - 1
     
     /// Cofactor
     static let h2 = BigInt("5d543a95414e7f1091d50792876a202cd91de4547085abaa68a205b2e5a7ddfa628f1cb4d9e82ef21537e293a6691ae1616ec6e786f0c70cf1c38e31c7238e5", radix: 16)!
