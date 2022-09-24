@@ -163,9 +163,9 @@ public extension Fp6 {
         let t2 = c2 * r2
         
         return .init(
-            c0: (t0 + (c1 + c2) * (r1 * r2) - (t1 + t2)).mulByNonresidue(),
-            c1: ((c0 + c1) * (r0 + r1) - (t0 + t1) + t2).mulByNonresidue(),
-            c2: (t1 + (c0 + c2) * (r0 + r2) - t0 + t2)
+            c0: ((c1 + c2) * (r1 + r2) - (t1 + t2)).mulByNonresidue() + t0,
+            c1: (c0 + c1) * (r0 + r1) - (t0 + t1) + t2.mulByNonresidue(),
+            c2: (c0 + c2) * (r0 + r2) - (t0 + t2) + t1
         )
     }
     

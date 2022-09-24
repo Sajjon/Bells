@@ -11,23 +11,28 @@ import FileCheck
 
 
 final class Fp6Tests: FieldTest<Fp6> {
-    func test_arithmetic() throws {
+    func test_aa() throws {
        
         let a = Fp6(
             c0: .init(
-                c0: "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000008c0ed57c",
-                c1: "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000008c0ed563"
+                c0: 0x8c0ed57c,
+                c1: 0x8c0ed563
             ),
             c1: .init(
-                c0: "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000008c0ed562",
-                c1: "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000008c0ed561"
+                c0: 0x8c0ed562,
+                c1: 0x8c0ed561
             ),
             c2: .init(
-                c0: "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000008c0ed560",
-                c1: "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000008c0ed567"
+                c0: 0x8c0ed560,
+                c1: 0x8c0ed567
             )
         )
         
+        let aa = a * a
+      
+        XCTAssertEqual(a.squared(), aa)
+        
+     
         let b = Fp6(
             c0: .init(
                 c0: "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000008c0ed566",
@@ -57,11 +62,9 @@ final class Fp6Tests: FieldTest<Fp6> {
                 c1: "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000008c0ed553"
             )
         )
-        
-        XCTAssertEqual(a.squared(), a * a)
-//        XCTAssertEqual(b.squared(), b * b)
-//        XCTAssertEqual(c.squared(), c * c)
-//        XCTAssertEqual((a + b) * c.squared(), (c * c * a) + (c * c * b))
+        XCTAssertEqual(b.squared(), b * b)
+        XCTAssertEqual(c.squared(), c * c)
+        XCTAssertEqual((a + b) * c.squared(), (c * c * a) + (c * c * b))
 //
 //        try XCTAssertEqual(
 //            a.inverted() * b.inverted(),
