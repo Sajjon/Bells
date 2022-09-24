@@ -25,16 +25,16 @@ public extension Fp6 {
         precondition(coeffs.count == 6)
         self.init(
             c0: .init(
-                c0: coeffs[0],
-                c1: coeffs[1]
+                c0: coeffs[coeffs.startIndex.advanced(by: 0)],
+                c1: coeffs[coeffs.startIndex.advanced(by: 1)]
             ),
             c1: .init(
-                c0: coeffs[2],
-                c1: coeffs[3]
+                c0: coeffs[coeffs.startIndex.advanced(by: 2)],
+                c1: coeffs[coeffs.startIndex.advanced(by: 3)]
             ),
             c2: .init(
-                c0: coeffs[4],
-                c1: coeffs[5]
+                c0: coeffs[coeffs.startIndex.advanced(by: 4)],
+                c1: coeffs[coeffs.startIndex.advanced(by: 5)]
             )
         )
     }
