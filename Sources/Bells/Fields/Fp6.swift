@@ -21,6 +21,27 @@ public struct Fp6: Field, CustomDebugStringConvertible {
 
 public extension Fp6 {
     
+    init<C>(coeffs: C) where C: Collection, C.Element == BigInt, C.Index == Int {
+        precondition(coeffs.count == 6)
+        self.init(
+            c0: .init(
+                c0: coeffs[0],
+                c1: coeffs[1]
+            ),
+            c1: .init(
+                c0: coeffs[2],
+                c1: coeffs[3]
+            ),
+            c2: .init(
+                c0: coeffs[4],
+                c1: coeffs[5]
+            )
+        )
+    }
+}
+
+public extension Fp6 {
+    
     var description: String {
         """
         c0: \(c0),

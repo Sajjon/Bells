@@ -16,12 +16,14 @@ public struct Fp2: FiniteField, CustomDebugStringConvertible {
     /// Imaginary part, aka `c1`
     public let imaginary: Fp; public var c1: Fp { imaginary }
     
-    init(real: Fp, imaginary: Fp) {
+    public init(real: Fp, imaginary: Fp) {
         self.real = real
         self.imaginary = imaginary
     }
-    init(c0: Fp, c1: Fp) {
-        self.init(real: c0, imaginary: c1)
+}
+public extension Fp2 {
+    init(c0: BigInt, c1: BigInt) {
+        self.init(real: .init(value: c0), imaginary: .init(value: c1))
     }
 }
 
