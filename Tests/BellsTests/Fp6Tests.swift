@@ -12,9 +12,7 @@ import FileCheck
 
 final class Fp6Tests: FieldTest<Fp6> {
     
-  
-    
-    func test_fp6_inversion() throws {
+    func test_inverted() throws {
         let a = Fp6(
             c0: .init(
                 c0: 0x8c0ed57c,
@@ -43,7 +41,7 @@ final class Fp6Tests: FieldTest<Fp6> {
         try XCTAssertEqual(a.inverted() * a, Fp6.one)
     }
     
-    func test_aa() throws {
+    func test_squared() throws {
        
         let a = Fp6(
             c0: .init(
@@ -105,7 +103,83 @@ final class Fp6Tests: FieldTest<Fp6> {
 
         try XCTAssertEqual(a.inverted() * a, Fp6.one)
     }
+    
+    func test_mulby01() throws {
+       
+        let x = Fp2.init(
+            c0: "1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153fffe877e1715b7a71e48",
+            c1: "1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffff20be8b9310b1e3e4"
+        )
+        
+        let y = Fp2.init(
+            c0: "1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffff20be8b9310b1e3e4",
+            c1: "1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153fffe877e1715b7a71e48"
+        )
+        
+         let a = Fp6(
+             c0: .init(
+                 c0: 0x8c0ed57c,
+                 c1: 0x8c0ed563
+             ),
+             c1: .init(
+                 c0: 0x8c0ed562,
+                 c1: 0x8c0ed561
+             ),
+             c2: .init(
+                 c0: 0x8c0ed560,
+                 c1: 0x8c0ed567
+             )
+         )
+        
+        let sut = a.multiplyBy01(b0: x, b1: y)
+     
+        XCTAssertEqual(sut.c0.c0.value, .init(hex: "000000000000000000000000000000000000000000000000000000000000000000000000fb8862bff052039f2fa36167"))
+        XCTAssertEqual(sut.c0.c1.value, .init(hex: "1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffd0e1b5b406416505857025202"))
+        
+        XCTAssertEqual(sut.c1.c0.value, .init(hex: "1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153fff0c2b3a16d0b244011"))
+        XCTAssertEqual(sut.c1.c1.value, .init(hex: "1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffcba433a33d261322995b89e11"))
+        
+        XCTAssertEqual(sut.c2.c0.value, .init(hex: "0000000000000000000000000000000000000000000000000000000000000000000000000000000430c32f0af4dd6e46"))
+        XCTAssertEqual(sut.c2.c1.value, .init(hex: "1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffcba433a4e2975362af9dab0e9"))
 
+    }
+
+
+    
+    func test_mulby1() throws {
+       
+        let x = Fp2.init(
+            c0: "1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153fffe877e1715b7a71e48",
+            c1: "1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffff20be8b9310b1e3e4"
+        )
+     
+         let a = Fp6(
+             c0: .init(
+                 c0: 0x8c0ed57c,
+                 c1: 0x8c0ed563
+             ),
+             c1: .init(
+                 c0: 0x8c0ed562,
+                 c1: 0x8c0ed561
+             ),
+             c2: .init(
+                 c0: 0x8c0ed560,
+                 c1: 0x8c0ed567
+             )
+         )
+        
+        let sut = a.multiplyBy1(b1: x)
+     
+        XCTAssertEqual(sut.c0.c0.value, .init(hex: "000000000000000000000000000000000000000000000000000000000000000000000000a7b041e8a6056338d26c8166"))
+        XCTAssertEqual(sut.c0.c1.value, .init(hex: "1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffd61f37c316c36813d51da3b27"))
+        
+        XCTAssertEqual(sut.c1.c0.value, .init(hex: "1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffe5d7bdee8fb0226e76b3cbdac"))
+        XCTAssertEqual(sut.c1.c1.value, .init(hex: "1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffdb5cb9d18470ef6c1349725fe"))
+        
+        XCTAssertEqual(sut.c2.c0.value, .init(hex: "1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffe5d7bdf06e998e5d8e59f722c"))
+        XCTAssertEqual(sut.c2.c1.value, .init(hex: "1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffdb5cb9d2a3c9c9ba6132e6efa"))
+
+    }
 
 }
 
