@@ -99,3 +99,26 @@ extension Fp2: ExpressibleByStringLiteral {
         try! self.init(value)
     }
 }
+
+extension BigInt {
+    init(hex: String) {
+        var hex = hex
+        if hex.starts(with: "0x") {
+            hex = String(hex.dropFirst(2))
+        }
+        self.init(hex, radix: 16)!
+    }
+}
+extension Fp {
+    init(hex: String) {
+        self.init(value: .init(hex: hex))
+    }
+}
+extension Fp2 {
+    init(c0 c0Hex: String, c1 c1Hex: String) {
+        self.init(real: .init(hex: c0Hex), imaginary: .init(hex: c1Hex))
+    }
+    init(c0: BigInt, c1: BigInt) {
+        self.init(real: .init(value: c0), imaginary: .init(value: c1))
+    }
+}

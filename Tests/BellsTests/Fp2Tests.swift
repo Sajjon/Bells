@@ -10,30 +10,8 @@ import FileCheck
 #endif
 
 
-extension BigInt {
-    init(hex: String) {
-        var hex = hex
-        if hex.starts(with: "0x") {
-            hex = String(hex.dropFirst(2))
-        }
-        self.init(hex, radix: 16)!
-    }
-}
-extension Fp {
-    init(hex: String) {
-        self.init(value: .init(hex: hex))
-    }
-}
-extension Fp2 {
-    init(c0 c0Hex: String, c1 c1Hex: String) {
-        self.init(real: .init(hex: c0Hex), imaginary: .init(hex: c1Hex))
-    }
-    init(c0: BigInt, c1: BigInt) {
-        self.init(real: .init(value: c0), imaginary: .init(value: c1))
-    }
-}
 
-final class Fp2Tests: FiniteFieldTest<Fp> {
+final class Fp2Tests: FieldTest<Fp> {
     
     func test_inverted() throws {
         let fp2 = Fp2(

@@ -10,7 +10,7 @@ import FileCheck
 #endif
 
 typealias Fp1Tests = FpTests
-final class FpTests: FiniteFieldTest<Fp> {
+final class FpTests: FieldTest<Fp> {
     func test_field_sqrt() throws {
         let sqr1 = Fp(value: BigInt("300855555557", radix: 10)!)
         let sqrt = try XCTUnwrap(sqr1.sqrt())
