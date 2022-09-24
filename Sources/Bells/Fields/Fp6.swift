@@ -194,8 +194,8 @@ public extension Fp6 {
         let t2 = c1.squared() - (c0 * c2)
         
         /// `t4 = 1/(((c2 * T1 + c1 * t2) * v) + c0 * t0)`
-        let t4 = try (c2 * t1 + c1 * t2).mulByNonresidue() + (c0 * t0).inverted()
-        
+        let t4 = try (((c2 * t1) + (c1 * t2)).mulByNonresidue() + (c0 * t0)).inverted()
+  
         return .init(
             c0: t4 * t0,
             c1: t4 * t1,

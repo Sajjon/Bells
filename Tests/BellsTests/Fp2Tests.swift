@@ -35,6 +35,16 @@ extension Fp2 {
 
 final class Fp2Tests: FiniteFieldTest<Fp> {
     
+    func test_inverted() throws {
+        let fp2 = Fp2(
+            c0: 0x8c0ed57c,
+            c1: 0x8c0ed563
+        )
+        let inv = try fp2.inverted()
+        XCTAssertEqual(inv.c0, .init(hex: "0990a4c1e582bfd21af11d192c680b77902a6407ab042c9fcea574e03f870eb764b31d443aff543b19b9141f1c418f11"))
+        XCTAssertEqual(inv.c1, .init(hex: "151dddade92ab5209a591e81abaa5e02f42f44ea2371aa002b719fd135df3818efdef2a042192ba083a76413517bd36e"))
+    }
+    
     // Test from: https://github.com/zkcrypto/bls12_381/blob/080eaa74ec0e394377caa1ba302c8c121df08b07/src/fp2.rs#L674-L754
     func test_sqrt() throws {
         

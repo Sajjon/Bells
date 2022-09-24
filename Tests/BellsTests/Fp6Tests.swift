@@ -11,6 +11,38 @@ import FileCheck
 
 
 final class Fp6Tests: FieldTest<Fp6> {
+    
+  
+    
+    func test_fp6_inversion() throws {
+        let a = Fp6(
+            c0: .init(
+                c0: 0x8c0ed57c,
+                c1: 0x8c0ed563
+            ),
+            c1: .init(
+                c0: 0x8c0ed562,
+                c1: 0x8c0ed561
+            ),
+            c2: .init(
+                c0: 0x8c0ed560,
+                c1: 0x8c0ed567
+            )
+        )
+        let aInv = try a.inverted()
+        
+        XCTAssertEqual(aInv.c0.c0.value, .init(hex: "0f5d3888ce8fb7e81051c8ab459ec57c5cac1cc5bad8d497f5d941f454303adb51e1f13856f01eb3b6e96a349bfd506c"))
+        XCTAssertEqual(aInv.c0.c1.value, .init(hex: "00b5066943316367b6f802b3e2feb164112cf652c56a8fe4395f22843335c3f6db7d125937cfa97b25f59ab0a0ccae5d"))
+        
+        XCTAssertEqual(aInv.c1.c0.value, .init(hex: "1308087806edee690d656f71d22ae367dfc4963d04e46a2853d2e3d80c1b7494544e1cba6032f0db129086d6da4a1d61"))
+        XCTAssertEqual(aInv.c1.c1.value, .init(hex: "18b68ea30cef69b18b39c24d25fff7c55b0ac9f2255e96f66d8aac1249925ad6c5f810e86dacdf69633e1b646ce82c64"))
+        
+        XCTAssertEqual(aInv.c2.c0.value, .init(hex: "07b1fa73b4b5c51f32ea6b76a0fa01e75c758e06983c5f6813890ef66fa9285f69c75be4c28fb6fb742f8f4cb2e91545"))
+        XCTAssertEqual(aInv.c2.c1.value, .init(hex: "10fc74a9af1ceb669cf38cd6277e1cd4f7f4c10b46219aed14de3948b4b64a318f174c3b5e403449dcbc2aab5f712c57"))
+
+        try XCTAssertEqual(a.inverted() * a, Fp6.one)
+    }
+    
     func test_aa() throws {
        
         let a = Fp6(
@@ -65,13 +97,13 @@ final class Fp6Tests: FieldTest<Fp6> {
         XCTAssertEqual(b.squared(), b * b)
         XCTAssertEqual(c.squared(), c * c)
         XCTAssertEqual((a + b) * c.squared(), (c * c * a) + (c * c * b))
-//
-//        try XCTAssertEqual(
-//            a.inverted() * b.inverted(),
-//            (a * b).inverted()
-//        )
-//        
-//        try XCTAssertEqual(a.inverted() * a, Fp6.one)
+
+        try XCTAssertEqual(
+            a.inverted() * b.inverted(),
+            (a * b).inverted()
+        )
+
+        try XCTAssertEqual(a.inverted() * a, Fp6.one)
     }
 
 
