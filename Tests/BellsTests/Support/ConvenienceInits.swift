@@ -17,25 +17,16 @@ extension Fp {
 
 extension Fp2 {
     init(
-        real: [BigInt.Word],
-        img: [BigInt.Word]
+        c0: [BigInt.Word],
+        c1: [BigInt.Word]
     ) {
         self.init(
-            real: .init(words: real),
-            imaginary: .init(words: img)
-        )
-    }
-    init(
-        real: BigInt,
-        img: BigInt
-    ) {
-        self.init(
-            real: .init(value: real),
-            imaginary: .init(value: img)
+            c0: .init(words: c0),
+            c1: .init(words: c1)
         )
     }
     
-    /// Initialization of Fp using a string on format `<IMG>*u + <REAL>`
+    /// Initialization of Fp using a string on format `<IMG>*u + <c0>`
     /// where <REAL> and <IMG> are decimal strings.
     ///
     /// Example:
@@ -52,7 +43,7 @@ extension Fp2 {
     /// Which should be equal:
     ///
     ///     Fp2(
-    ///        real: [
+    ///        c0: [
     ///           0x2bee_d146_27d7_f9e9,
     ///           0xb661_4e06_660e_5dce,
     ///           0x06c4_cc7c_2f91_d42c,
@@ -88,7 +79,7 @@ extension Fp2 {
             struct FailedToParseIntsFromDecimalString: Error {}
             throw FailedToParseIntsFromDecimalString()
         }
-        self.init(real: .init(value: real), imaginary: .init(value: img))
+        self.init(c0: real, c1: img)
         
     }
     static let complexStringSeparator = "+"
@@ -116,9 +107,6 @@ extension Fp {
 }
 extension Fp2 {
     init(c0 c0Hex: String, c1 c1Hex: String) {
-        self.init(real: .init(hex: c0Hex), imaginary: .init(hex: c1Hex))
-    }
-    init(c0: BigInt, c1: BigInt) {
-        self.init(real: .init(value: c0), imaginary: .init(value: c1))
+        self.init(c0: Fp(hex: c0Hex), c1: Fp(hex: c1Hex))
     }
 }

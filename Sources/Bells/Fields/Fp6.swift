@@ -38,6 +38,24 @@ public extension Fp6 {
             )
         )
     }
+    
+    init<C>(coeffs: C) where C: Collection, C.Element == Fp, C.Index == Int {
+        precondition(coeffs.count == 6)
+        self.init(
+            c0: .init(
+                c0: coeffs[coeffs.startIndex.advanced(by: 0)],
+                c1: coeffs[coeffs.startIndex.advanced(by: 1)]
+            ),
+            c1: .init(
+                c0: coeffs[coeffs.startIndex.advanced(by: 2)],
+                c1: coeffs[coeffs.startIndex.advanced(by: 3)]
+            ),
+            c2: .init(
+                c0: coeffs[coeffs.startIndex.advanced(by: 4)],
+                c1: coeffs[coeffs.startIndex.advanced(by: 5)]
+            )
+        )
+    }
 }
 
 public extension Fp6 {
@@ -81,31 +99,41 @@ internal enum Frobenius {
     
     /// Used by Fp6 one and two
     static let fffe = BigInt("00000000000000005f19672fdf76ce51ba69c6076a0f77eaddb3a93be6f89688de17d813620a00022e01fffffffefffe", radix: 16)!
-    
-    // Used by Fp6 two
+   
+        
+    /// Finite extension field over irreducible polynominal.
+    /// `Fp(u) / (u² - β) where β = -1`
+    static let fp2Coefficients: [Fp] = [
+        BigInt(1),
+        aaaa
+    ].map(Fp.init)
+
     
     static let fp6Coefficients1: [Fp2] = {
         let pairs: [(BigInt, BigInt)] = [
-            (BigInt(1), BigInt(0)),
+            (1, 0),
             (0, aaac),
             (fffe, 0),
             (0, 1),
             (aaac, 0),
             (0, fffe),
         ]
-        return pairs.map { Fp2(real: .init(value: $0.0), imaginary: .init(value: $0.1)) }
+        precondition(pairs.count == 6)
+        return pairs.map { Fp2(c0: $0.0, c1: $0.1) }
     }()
     
     
     static let fp6Coefficients2: [Fp2] = {
         let pairs: [(BigInt, BigInt)] = [
-            (BigInt(1), BigInt(0)),
+            (1, 0),
             (aaad, 0),
+            (aaac, 0),
             (aaaa, 0),
             (fffe, 0),
             (ffff, 0),
         ]
-        return pairs.map { Fp2(real: .init(value: $0.0), imaginary: .init(value: $0.1)) }
+        precondition(pairs.count == 6)
+        return pairs.map { Fp2(c0: $0.0, c1: $0.1) }
     }()
     
     /// used by Fp6 two and Fp12
@@ -145,7 +173,8 @@ internal enum Frobenius {
             (aaad, 0),
             (e980078116, f82995)
         ]
-        return pairs.map { Fp2(real: .init(value: $0.0), imaginary: .init(value: $0.1)) }
+        precondition(pairs.count == 12)
+        return pairs.map(Fp2.init)
     }()
       
 }

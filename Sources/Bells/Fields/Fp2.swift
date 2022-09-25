@@ -11,45 +11,69 @@ import BigInt
 /// Fp₂ over complex plane
 public struct Fp2: FiniteField, CustomDebugStringConvertible {
     /// Real part, aka `c0`
-    public let real: Fp; public var c0: Fp { real }
+    public let c0: Fp
     
     /// Imaginary part, aka `c1`
-    public let imaginary: Fp; public var c1: Fp { imaginary }
+    public let c1: Fp
     
-    public init(real: Fp, imaginary: Fp) {
-        self.real = real
-        self.imaginary = imaginary
+    public init(c0: Fp, c1: Fp) {
+        self.c0 = c0
+        self.c1 = c1
     }
 }
+private struct BadCount: Error {}
 public extension Fp2 {
     init(c0: BigInt, c1: BigInt) {
-        self.init(real: .init(value: c0), imaginary: .init(value: c1))
+        self.init(c0: .init(value: c0), c1: .init(value: c1))
     }
+    init(real: BigInt, imaginary: BigInt) {
+        self.init(c0: real, c1: imaginary)
+    }
+    init(_ tuple: (BigInt, BigInt)) {
+        self.init(c0: tuple.0, c1: tuple.1)
+    }
+    init(_ tuple: (Fp, Fp)) {
+        self.init(c0: tuple.0, c1: tuple.1)
+    }
+    init(_ collection: some Collection<Fp>) throws {
+        guard collection.count == 2 else {
+            throw BadCount()
+        }
+        self.init(c0: collection[collection.startIndex], c1: collection[collection.index(after: collection.startIndex)])
+    }
+    init(_ collection: some Collection<BigInt>) throws {
+        guard collection.count == 2 else {
+            throw BadCount()
+        }
+        self.init(c0: collection[collection.startIndex], c1: collection[collection.index(after: collection.startIndex)])
+    }
+    var real: BigInt { c0.value }
+    var imaginary: BigInt { c1.value }
 }
 
 public extension Fp2 {
     
     var description: String {
         """
-        Real: \(real.toDecimalString()),
-        Img:: \(imaginary.toDecimalString())
+        c0: \(c0.toDecimalString()),
+        c1:: \(c1.toDecimalString())
         """
     }
     var debugDescription: String {
         """
-        Real: \(real.toHexString(pad: true)),
-        Img:: \(imaginary.toHexString(pad: true))
+        c0: \(c0.toHexString(pad: true)),
+        c1: \(c1.toHexString(pad: true))
         """
     }
 }
 
 public extension Fp2 {
     static let order = Curve.P2
-    static let zero = Self(real: .zero, imaginary: .zero)
-    static let one = Self(real: .one, imaginary: .zero)
+    static let zero = Self(c0: .zero, c1: .zero)
+    static let one = Self(c0: .one, c1: .zero)
     
     func negated() -> Self {
-        .init(real: real.negated(), imaginary: imaginary.negated())
+        .init(c0: c0.negated(), c1: c1.negated())
     }
     
     static func + (lhs: Self, rhs: Self) -> Self {
@@ -60,11 +84,11 @@ public extension Fp2 {
     }
     static func * (lhs: Self, rhs: Self) -> Self {
         // (A+Bi)(C+Di) = (AC−BD) + (AD+BC)i
-        let A = lhs.real
-        let B = lhs.imaginary
-        let C = rhs.real
-        let D = rhs.imaginary
-        return .init(real: (A*C - B*D), imaginary: (A*D + B*C))
+        let A = lhs.c0
+        let B = lhs.c1
+        let C = rhs.c0
+        let D = rhs.c1
+        return .init(c0: (A*C - B*D), c1: (A*D + B*C))
     }
     static func / (lhs: Self, rhs: Self) throws -> Self {
         let inv = try rhs.inverted()
@@ -94,19 +118,17 @@ public extension Fp2 {
     /// of (a + bu). Importantly, this can be computing using
     /// only a single inversion in Fp.
     func inverted() throws -> Self {
-        let a = real.value
-        let b = imaginary.value
+        let a = c0.value
+        let b = c1.value
         let factor = try Fp(value: a * a + b * b).inverted()
-        return .init(real: factor * a, imaginary: factor * -b)
+        return .init(c0: factor * a, c1: factor * -b)
     }
     
     func squared() -> Self {
-        let c0 = real
-        let c1 = imaginary
         let a = c0 + c1
         let b = c0 - c1
         let c = c0 + c0
-        return .init(real: a * b, imaginary: c * c1)
+        return .init(c0: a * b, c1: c * c1)
     }
     
     func pow(n: BigInt) throws -> Self {
@@ -135,10 +157,10 @@ public extension Fp2 {
         let root = R[divisorIndex / 2]
         let x1 = try candidateSqrt / root
         let x2 = x1.negated()
-        let re1 = x1.real.value
-        let im1 = x1.imaginary.value
-        let re2 = x2.real.value
-        let im2 = x2.imaginary.value
+        let re1 = x1.c0.value
+        let im1 = x1.c1.value
+        let re2 = x2.c0.value
+        let im2 = x2.c1.value
         if im1 > im2 || (im1 == im2 && re1 > re2) {
             return x1
         }
@@ -150,13 +172,7 @@ public extension Fp2 {
 internal extension Fp2 {
     /// For `roots of unity`.
     static let rv1 = BigInt("6af0e0437ff400b6831e36d6bd17ffe48395dabc2d3435e77f76e17009241c5ee67992f72ec05f4c81084fbede3cc09", radix: 16)!
-    
-    /// Finite extension field over irreducible polynominal.
-    /// `Fp(u) / (u² - β) where β = -1`
-    static let frobeniusCoefficients: [Fp] = [
-        BigInt(1),
-        BigInt("1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaaa", radix: 16)!
-    ].map(Fp.init)
+
 }
 
 
@@ -178,24 +194,22 @@ public extension Fp2 {
             (0, -1),
             (-rv1, -rv1)
         ]
-        return tuples.map { Self(real: Fp(value: $0.0), imaginary: Fp(value: $0.1)) }
+        return tuples.map { Self(c0: Fp(value: $0.0), c1: Fp(value: $0.1)) }
     }()
     
     /// Multiply by: `u + 1`
     func mulByNonresidue() -> Self {
-        let c0 = real
-        let c1 = imaginary
-        return .init(
-            real: c0 - c1,
-            imaginary: c0 + c1
+        .init(
+            c0: c0 - c1,
+            c1: c0 + c1
         )
     }
     
     /// Raises to `q**i -th power`
      func frobeniusMap(power: Int) -> Self {
          .init(
-            real: real,
-            imaginary: imaginary * Self.frobeniusCoefficients[power % Self.frobeniusCoefficients.count]
+            c0: c0,
+            c1: c1 * Frobenius.fp2Coefficients[power % Frobenius.fp2Coefficients.count]
         )
      }
 }
@@ -203,15 +217,15 @@ public extension Fp2 {
 private extension Fp2 {
     static func op(_ lhs: Self, _ rhs: Self, _ operation: (Fp, Fp) -> Fp) -> Self {
         .init(
-            real: operation(lhs.real, rhs.real),
-            imaginary: operation(lhs.imaginary, rhs.imaginary)
+            c0: operation(lhs.c0, rhs.c0),
+            c1: operation(lhs.c1, rhs.c1)
         )
     }
     
     static func op(_ lhs: Self, _ rhs: BigInt, _ operation: (Fp, BigInt) -> Fp) -> Self {
         .init(
-            real: operation(lhs.real, rhs),
-            imaginary: operation(lhs.imaginary, rhs)
+            c0: operation(lhs.c0, rhs),
+            c1: operation(lhs.c1, rhs)
         )
     }
 }

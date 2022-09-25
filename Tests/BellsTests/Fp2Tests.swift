@@ -57,8 +57,8 @@ final class Fp2Tests: FieldTest<Fp> {
         XCTAssertEqual(
             c,
             Fp2(
-                real: b.real,
-                imaginary: .init(value: BigInt("18d400b280d93e62fcd559cbe77bd8b8b07e9bc405608611a9109e8f3041427e8a411ad149045812228109103250c9d0", radix: 16)!)
+                c0: b.c0,
+                c1: .init(value: BigInt("18d400b280d93e62fcd559cbe77bd8b8b07e9bc405608611a9109e8f3041427e8a411ad149045812228109103250c9d0", radix: 16)!)
             )
         )
         
@@ -94,8 +94,8 @@ extension Fp2: Arbitrary {
     public static var arbitrary: Gen<Self> {
         .compose { composer in
             Self(
-                real: composer.generate(using: Fp.arbitrary),
-                imaginary: composer.generate(using: Fp.arbitrary)
+                c0: composer.generate(using: Fp.arbitrary),
+                c1: composer.generate(using: Fp.arbitrary)
             )
         }
     }
