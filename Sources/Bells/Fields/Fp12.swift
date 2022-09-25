@@ -24,15 +24,29 @@ public extension Fp12 {
 public extension Fp12 {
     var description: String {
         """
-        hej
+        \(Self.self)(
+            c0: \(c0),
+            c1: \(c1),
+        )
         """
     }
 
     var debugDescription: String {
         """
-        hej
+        \(Self.self)(
+            c0: \(c0.debugDescription),
+            c1: \(c1.debugDescription),
+        )
         """
     }
+}
+
+extension BigInt {
+    
+    var bitWidthIgnoreSign: Int {
+        magnitude.bitWidth
+    }
+   
 }
 
 public extension Fp12 {
@@ -158,15 +172,15 @@ public extension Fp12 {
     }
 
     internal func cyclotomicExp(n: BigInt) -> Self {
-        var z = Fp12.one
-        let bits = BitArray(bitPattern: n).reversed()
-        for i in 0..<Curve.x.bitWidth {
-            z = z.cyclotomicSquare()
-            if bits[.init(i)] {
-                z *= self
+        return BitArray(bitPattern: n)
+            .prefix(Curve.x.bitWidthIgnoreSign)
+            .reversed()
+            .reduce(into: Self.one) {
+                $0 = $0.cyclotomicSquare()
+                if $1 {
+                    $0 *= self
+                }
             }
-        }
-        return z
     }
     
     // https://eprint.iacr.org/2010/354.pdf
