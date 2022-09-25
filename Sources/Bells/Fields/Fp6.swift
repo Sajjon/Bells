@@ -60,33 +60,21 @@ public extension Fp6 {
 
 public extension Fp6 {
     
-    var description: String {
+    func toString(radix: Int, pad: Bool) -> String {
         """
-        c0: \(c0),
-        c1: \(c1),
-        c2: \(c2)
-        """
-    }
-    var debugDescription: String {
-        """
-        c0: \(c0.debugDescription),
-        c1: \(c1.debugDescription),
-        c2: \(c2.debugDescription)
+        \(Self.self)(
+            c0: \(c0.toString(radix: radix, pad: pad)),
+            c1: \(c1.toString(radix: radix, pad: pad))
+            c2: \(c2.toString(radix: radix, pad: pad))
+        )
         """
     }
+
 }
 
 /// `1 / F2(2)^((p-1)/3) in GF(p²)`
 internal let psi2C1 = Frobenius.aaac
 
-struct PointG1 {}
-/// `σ endomorphism`
-func sigma() -> PointG1 {
-  let beta = Frobenius.aaac
-//  let [x, y] = this.toAffine();
-//  return new PointG1(x.multiply(beta), y);
-    fatalError()
-}
 
 internal enum Frobenius {
     static let aaaa = BigInt("1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaaa", radix: 16)!

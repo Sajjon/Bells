@@ -9,7 +9,7 @@ import BigInt
 import Foundation
 
 /// Finite field
-public protocol Field: AdditiveArithmetic, CustomStringConvertible {
+public protocol Field: AdditiveArithmetic, CustomStringConvertible, CustomDebugStringConvertible {
     func negated() -> Self
     func inverted() throws -> Self
     static func * (lhs: Self, rhs: Self) -> Self
@@ -21,6 +21,26 @@ public protocol Field: AdditiveArithmetic, CustomStringConvertible {
 
     static var one: Self { get }
     static prefix func - (this: Self) -> Self
+    func toString(radix: Int, pad: Bool) -> String
+}
+
+public extension Field {
+    
+    var description: String {
+        toDecimalString(pad: false)
+    }
+    
+    func toDecimalString(pad: Bool = false) -> String {
+        toString(radix: 10, pad: pad)
+    }
+    
+    func toHexString(pad: Bool = true) -> String {
+        toString(radix: 16, pad: pad)
+    }
+    
+    var debugDescription: String {
+        toHexString(pad: true)
+    }
 }
 
 public extension Field {
@@ -50,8 +70,13 @@ public extension Field {
     static func * (lhs: Int, rhs: Self) -> Self {
         BigInt(lhs) * rhs
     }
+    
+    mutating func negate() {
+        self = negated()
+    }
 }
 
 public protocol FiniteField: Field {
     static var order: BigInt { get }
+    static var maxBits: Int { get }
 }

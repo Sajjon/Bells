@@ -22,20 +22,12 @@ public extension Fp12 {
 }
 
 public extension Fp12 {
-    var description: String {
+    
+    func toString(radix: Int, pad: Bool) -> String {
         """
         \(Self.self)(
-            c0: \(c0),
-            c1: \(c1),
-        )
-        """
-    }
-
-    var debugDescription: String {
-        """
-        \(Self.self)(
-            c0: \(c0.debugDescription),
-            c1: \(c1.debugDescription),
+            c0: \(c0.toString(radix: radix, pad: pad)),
+            c1: \(c1.toString(radix: radix, pad: pad))
         )
         """
     }

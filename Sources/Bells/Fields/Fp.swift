@@ -9,7 +9,7 @@ import Foundation
 import BigInt
 
 /// Finite field over `p`.
-public struct Fp: FiniteField, CustomDebugStringConvertible {
+public struct Fp: FiniteField {
     public let value: BigInt
     init(value: BigInt) {
         self.value = mod(a: value, b: Self.order)//value % Self.order
@@ -18,23 +18,15 @@ public struct Fp: FiniteField, CustomDebugStringConvertible {
 
 // MARK: CustomStringConvertible
 public extension Fp {
-    var description: String {
-        toDecimalString(pad: false)
+    
+    func toString(radix: Int = 16, pad: Bool) -> String {
+        _toString(
+            radix: radix,
+            pad: pad ? (radix == 16 ? Pad.toLength(96) : Pad.toLength(115)) : nil
+        )
     }
     
-    func toDecimalString(pad: Bool = false) -> String {
-        toString(radix: 10, pad: pad ? .toLength(115) : nil)
-    }
-    
-    func toHexString(pad: Bool = true) -> String {
-        toString(radix: 16, pad: pad ? .toLength(96) : nil)
-    }
-    
-    var debugDescription: String {
-        toHexString(pad: true)
-    }
-    
-    func toString(radix: Int = 16, pad: Pad?) -> String {
+    private func _toString(radix: Int = 16, pad: Pad?) -> String {
         value.toString(radix: radix, pad: pad)
     }
 }
@@ -75,6 +67,7 @@ public extension Fp {
     
     static let order = Curve.P
     var order: BigInt { Self.order }
+    static let maxBits = Self.order.bitWidthIgnoreSign
     
     static let zero = Self(value: 0)
     static let one = Self(value: 1)

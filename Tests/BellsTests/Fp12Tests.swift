@@ -10,7 +10,6 @@ import FileCheck
 #endif
 
 
-
 final class Fp12Tests: FieldTest<Fp12> {
     
     func test_frob() {
@@ -68,7 +67,7 @@ final class Fp12Tests: FieldTest<Fp12> {
         
         let aInv = try a.inverted()
         
-        let expectedInverted = Fp12.init(coeffs: [
+        let expectedInverted = Fp12(coeffs: [
           "170ac059f9612f497b918f87dc15fbbca5ca218661be46b4236709617a1d3757e6d292c9b58cf250cc5a64418f050794",
           "106dfbaca506cf2054700e9e0bdd4cd3881a5397b65cb3a6b80938b3425a92b576120252a18163b1d565189e88798b77",
           "0626566f1b4ca705c05f6d874929b34d276e42a9c842039f5c4a1a9784e1ebd5d20e60cb6de6556c0ca7d362004177da",
@@ -85,7 +84,7 @@ final class Fp12Tests: FieldTest<Fp12> {
        
         XCTAssertEqual(aInv, expectedInverted)
         
-        let frobMap6Expected = Fp12.init(coeffs: [
+        let frobMap6Expected = Fp12(coeffs: [
             "1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaa5d",
             "1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaa70",
             "023ca1624e6b67d868054dc4171231499cf22de5bd10db1b56195183bf585a80e9e2f787859e8d26940dfa8c5877e0c8",
@@ -106,7 +105,7 @@ final class Fp12Tests: FieldTest<Fp12> {
         
         let frobMap6DivSelf = try frobMap6 / a
         
-        let expected = Fp12.init(coeffs: [
+        let expected = Fp12(coeffs: [
             "0271d279499e7b1e44e85d2597fd4f7dcbb4c0a74b9c0090acee7e2759ef93bc9cd2387a92ce336b7e4cb0b76c6052f4",
             "0135b3a48844bf6ebf500723a59b0b9a353e171e07996d27e23e7faffaad3adb3a2d12f95bfd3a86cffc5ceaeead3fcb",
             "133282f9dc4f8b48d6a7173ea1ec18fc084905dd29fe9e7454192c30130c130927fdaffd7abf7eccf8484df7b7447419",
@@ -132,7 +131,7 @@ final class Fp12Tests: FieldTest<Fp12> {
     
     func test_finalExp() throws {
         
-        let a = Fp12.init(coeffs: [
+        let a = Fp12(coeffs: [
             "1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaa5d",
             "1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaa70",
             "023ca1624e6b67d868054dc4171231499cf22de5bd10db1b56195183bf585a80e9e2f787859e8d26940dfa8c5877e0c8",
@@ -149,7 +148,7 @@ final class Fp12Tests: FieldTest<Fp12> {
         
         let sut = try a.finalExponentiate()
         
-        let expected = Fp12.init(coeffs: [
+        let expected = Fp12(coeffs: [
             "0a2b7db0586728c4a9b72ef23883a1cd87d3c430babdb59e1ce2630458f4ff2e75d1b5dea63b8fd9560b0366a7fd04d3",
             "0b14c929e25c35a42cc1666b80bec7b9343893972cc75a1415ec77943ed5c7919d343beae8e47c44fc7f919d8da5f5bd",
             "05c4537782ca6495b34e45787cd6a0d3d856c819b54bbbe0dee012bfcb42b385541c61ff2b488777eb692de68ed98f5f",
@@ -164,26 +163,7 @@ final class Fp12Tests: FieldTest<Fp12> {
             "170507dcb391b1c9fa764fd47c4159ff98898ecd7a34c61a6342ee0504382de409d53ac63f9eed4c32cf02fe27648580",
         ].map(BigInt.init(hex:)))
         
-        func doTest(_ keyPath: KeyPath<Fp12, Fp>, line: UInt = #line) {
-            doTestFp12(sut, expected, keyPath, line: line)
-        }
-        
-        doTest(\.c0.c0.c0)
-        doTest(\.c0.c0.c1)
-        doTest(\.c0.c1.c0)
-        doTest(\.c0.c1.c1)
-        doTest(\.c0.c2.c0)
-        doTest(\.c0.c2.c1)
-        doTest(\.c1.c0.c0)
-        doTest(\.c1.c0.c1)
-        doTest(\.c1.c1.c0)
-        doTest(\.c1.c1.c1)
-        doTest(\.c1.c2.c0)
-        doTest(\.c1.c2.c1)
-        
         XCTAssertEqual(sut, expected)
-        
-        
     }
     
     func test_cyclotomicExponentiation() throws {
@@ -225,7 +205,7 @@ final class Fp12Tests: FieldTest<Fp12> {
     
     func test_cyclotomicSquare() throws {
         
-        let a = Fp12.init(coeffs: [
+        let a = Fp12(coeffs: [
             "1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaa5d",
             "1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaa70",
             "023ca1624e6b67d868054dc4171231499cf22de5bd10db1b56195183bf585a80e9e2f787859e8d26940dfa8c5877e0c8",
@@ -242,7 +222,7 @@ final class Fp12Tests: FieldTest<Fp12> {
         
         let cyclotomicSquare = a.cyclotomicSquare()
         
-        let expected = Fp12.init(coeffs: [
+        let expected = Fp12(coeffs: [
             "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001ed8",
             "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000588d",
             "0207ba9c7a2b7f9dc292d97a63bf37417618d4c905b429dfc5143af94d1baf79902c5806e85d73b5530cfab9a1fb2e10",

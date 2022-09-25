@@ -14,12 +14,15 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/attaswift/BigInt", from: "5.3.0"),
-        .package(url: "https://github.com/pointfreeco/swift-tagged", from: "0.7.0"),
+        
         .package(url: "https://github.com/apple/swift-algorithms", from: "1.0.0"),
+        .package(url: "https://github.com/apple/swift-collections", branch: "feature/BitSet"),
+        .package(url: "https://github.com/apple/swift-numerics", from: "1.0.2"),
+        
+        // Dev dependencies for tests
         .package(url: "https://github.com/sajjon/BytePattern", from: "0.0.6"),
         .package(url: "https://github.com/typelift/SwiftCheck", from: "0.12.0"),
         .package(url: "https://github.com/llvm-swift/FileCheck", from: "0.1.0"),
-        .package(url: "https://github.com/apple/swift-collections", branch: "feature/BitSet"),
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -28,8 +31,8 @@ let package = Package(
             name: "Bells",
             dependencies: [
                 "BigInt",
-                .product(name: "Tagged", package: "swift-tagged"),
                 .product(name: "Collections", package: "swift-collections"),
+                .product(name: "RealModule", package: "swift-numerics"),
             ]
         ),
         .testTarget(

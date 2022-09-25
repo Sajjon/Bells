@@ -53,22 +53,19 @@ public extension Fp2 {
 
 public extension Fp2 {
     
-    var description: String {
+    func toString(radix: Int, pad: Bool) -> String {
         """
-        c0: \(c0.toDecimalString()),
-        c1:: \(c1.toDecimalString())
-        """
-    }
-    var debugDescription: String {
-        """
-        c0: \(c0.toHexString(pad: true)),
-        c1: \(c1.toHexString(pad: true))
+        \(Self.self)(
+            c0: \(c0.toString(radix: radix, pad: pad)),
+            c1: \(c1.toString(radix: radix, pad: pad))
+        )
         """
     }
 }
 
 public extension Fp2 {
     static let order = Curve.P2
+    static let maxBits = Self.order.bitWidthIgnoreSign
     static let zero = Self(c0: .zero, c1: .zero)
     static let one = Self(c0: .one, c1: .zero)
     
