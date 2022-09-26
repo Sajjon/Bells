@@ -77,6 +77,15 @@ public extension Fp12 {
     static func * (lhs: Self, rhs: BigInt) -> Self {
         Self(c0: lhs.c0 * rhs, c1: lhs.c1 * rhs)
     }
+    
+    func multiplyBy014(o0: Fp2, o1: Fp2, o4: Fp2) -> Self {
+        let t0 = c0.multiplyBy01(b0: o0, b1: o1)
+        let t1 = c1.multiplyBy1(b1: o4)
+        return Self(
+            c0: t1.mulByNonresidue() + t0,
+            c1: (c1 + c0).multiplyBy01(b0: o0, b1: o1 + o4) - t0 - t1
+        )
+    }
 
     static func / (lhs: Self, rhs: BigInt) throws -> Self {
         let inv = try Fp(value: rhs).inverted().value
@@ -94,6 +103,9 @@ public extension Fp12 {
             c0: (c1.mulByNonresidue() + c0) * (c0 + c1) - ab - ab.mulByNonresidue(),
             c1: ab + ab
         )
+    }
+    mutating func square() {
+        self = self.squared()
     }
 
     func conjugate() -> Self {

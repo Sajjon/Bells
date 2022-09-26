@@ -9,6 +9,17 @@ import Foundation
 import BigInt
 import RealModule
 
+extension BigInt {
+    func serialize(padToLength: Int? = nil, with pad: UInt8 = 0x00) -> Data {
+        let data = serialize()
+        guard let padToLength, padToLength > data.count else { return data }
+        return data + Data([UInt8](
+            repeating: pad,
+            count: padToLength - data.count
+        ))
+    }
+}
+
 func UNTESTED_genInvertBatch<F: Field>(fieldType: F.Type, numbers: [F]) throws -> [F] {
     
     var tmp = [F].init(repeating: F.zero, count: numbers.count)
@@ -139,10 +150,9 @@ public extension ProjectivePoint {
         let SS = S * S
         let SSS = SS * S
         let B = x * y * S
-        let H = W * W - (B * 8)
+        let H = (W * W) - (B * 8)
         let X3 = H * S * 2
-        // W * (4 * B - H) - 8 * y * y * S_squared
-        let Y3 = (W * (4 * B - H)) - (8 * y * y * SS)
+        let Y3 = W * (4 * B - H) - 8 * y * y * SS
         let Z3 = SSS * 8
         return Self(x: X3, y: Y3, z: Z3)
     }
@@ -206,16 +216,19 @@ public extension ProjectivePoint {
     
     /// OK for signature verification, UNSAFE for anythyng relating to private key operations.
     func unsafeMultiply(scalar: BigInt) throws -> Self {
+//        print("✨ multiplyUnsafe scalar = \(scalar.toHexString()), self: \(self.toString(radix: 16))")
         var n = try Self.validate(scalar: scalar)
         var point = Self.zero
         var d = self
         
         while n > 0 {
+//            print("n: \(n), d: \(d), point: \(point)")
             if (n & 1) != 0 {
+//                print("🔮 point += d, @n=\(n)")
                 point += d
-                d.double()
-                n >>= 1
             }
+            d.double()
+            n >>= 1
         }
         return point
     }
@@ -335,7 +348,7 @@ struct ToAffineError: Error {}
 
 // Point on G1 curve: (x, y)
 // We add z because we work with projective coordinates instead of affine x-y: that's much faster.
-public struct PointG1: ProjectivePoint {
+public struct PointG1: ProjectivePoint, Equatable {
     public var __storageForPrecomputes: [Int: [Self]] = [:]
     public typealias F = Fp
     
@@ -361,8 +374,8 @@ public extension PointG1 {
     }
     enum Error: Swift.Error {
         case invalidByteCount(
-            expectedCompressed: Int = BLS.publicKeyByteCount,
-            orUncompressed: Int = BLS.publicKeyByteCount * 2,
+            expectedCompressed: Int = BLS.publicKeyCompressedByteCount,
+            orUncompressed: Int = BLS.publicKeyCompressedByteCount * 2,
             butGot: Int
         )
         case invalidCompressedPoint
@@ -373,7 +386,7 @@ public extension PointG1 {
     private static func _from(bytes: some ContiguousBytes) throws -> Self {
         let point = try bytes.withUnsafeBytes { (bytesPointer) throws -> Self in
             
-            if bytesPointer.count == BLS.publicKeyByteCount {
+            if bytesPointer.count == BLS.publicKeyCompressedByteCount {
                 let P = Curve.P
                 let compressedValue = BigInt(bytesPointer)
                 
@@ -394,12 +407,12 @@ public extension PointG1 {
                     
                 }
                 return PointG1(x: x, y: y)
-            } else if bytesPointer.count == 2*BLS.publicKeyByteCount {
+            } else if bytesPointer.count == 2*BLS.publicKeyCompressedByteCount {
                 // Check if the infinity flag is set
                 guard (bytesPointer[0] & (1 << 6)) == 0 else { return .zero }
                 
-                let x = BigInt(Data(bytesPointer.prefix(BLS.publicKeyByteCount)))
-                let y = BigInt(Data(bytesPointer.suffix(BLS.publicKeyByteCount)))
+                let x = BigInt(Data(bytesPointer.prefix(BLS.publicKeyCompressedByteCount)))
+                let y = BigInt(Data(bytesPointer.suffix(BLS.publicKeyCompressedByteCount)))
                 return PointG1(x: Fp(value: x), y: Fp(value: y))
             } else {
                 throw Error.invalidByteCount(butGot: bytesPointer.count)
@@ -439,22 +452,29 @@ public extension PointG1 {
     // It returns false for shitty points.
     // https://eprint.iacr.org/2021/1130.pdf
     private func _isTorsionFree() throws -> Bool {
-      // TODO: fix if outcommented below is better, Noble has this comment
-      let xP = try mulCurveX() // [x]P
-      let u2P = try xP.mulCurveMinusX() // [u2]P
-      return u2P == phi()
-
-      // https://eprint.iacr.org/2019/814.pdf
-      // (z² − 1)/3
-      // const c1 = 0x396c8c005555e1560000000055555555n;
-      // const P = this;
-      // const S = P.sigma();
-      // const Q = S.double();
-      // const S2 = S.sigma();
-      // // [(z² − 1)/3](2σ(P) − P − σ²(P)) − σ²(P) = O
-      // const left = Q.subtract(P).subtract(S2).multiplyUnsafe(c1);
-      // const C = left.subtract(S2);
-      // return C.isZero();
+        // TODO: fix if outcommented below is better, Noble has this comment
+        let xP = try mulCurveX() // [x]P
+        let u2P = try xP.mulCurveMinusX() // [u2]P
+        let _phi = phi()
+        print("xP: \(xP.toString(radix: 16, pad: true))")
+        print("xP.affine: \(try! xP.toAffine().toString(radix: 16, pad: true))")
+        print("u2P: \(u2P.toString(radix: 16, pad: true))")
+        print("u2P.affine: \(try! u2P.toAffine().toString(radix: 16, pad: true))")
+        print("_phi: \(_phi.toString(radix: 16, pad: true))")
+        print("_phi.affine: \(try! _phi.toAffine().toString(radix: 16, pad: true))")
+        return u2P == _phi
+        
+        // https://eprint.iacr.org/2019/814.pdf
+        // (z² − 1)/3
+        // const c1 = 0x396c8c005555e1560000000055555555n;
+        // const P = this;
+        // const S = P.sigma();
+        // const Q = S.double();
+        // const S2 = S.sigma();
+        // // [(z² − 1)/3](2σ(P) − P − σ²(P)) − σ²(P) = O
+        // const left = Q.subtract(P).subtract(S2).multiplyUnsafe(c1);
+        // const C = left.subtract(S2);
+        // return C.isZero();
     }
     
     /// Checks is the point resides in prime-order subgroup.
@@ -478,129 +498,63 @@ public extension PointG1 {
         // all good
         return self
     }
+   
+    func toData(compress: Bool = false) -> Data {
+        try! assertValidity()
+   
+        var out: BigInt
+        if compress {
+            let P = Curve.P
+            if isZero {
+                out = BLS.exp2_383 + BLS.exp2_382
+            } else {
+                let affine = try! self.toAffine()
+                let x = affine.x
+                let y = affine.y
+                let flag = (y.value * 2) / P
+                out = x.value + flag * BLS.exp2_381 + BLS.exp2_383
+            }
+            return out.serialize(padToLength: BLS.publicKeyCompressedByteCount)
+        } else {
+            if isZero {
+                var out = Data(repeating: 0x00, count: 2 * BLS.publicKeyCompressedByteCount)
+                out[0] = 0x04
+                return out
+            } else {
+                let affine = try! self.toAffine()
+                let x = affine.x
+                let y = affine.y
+                return x.value.serialize(padToLength: BLS.publicKeyCompressedByteCount) + y.value.serialize(padToLength: BLS.publicKeyCompressedByteCount)
+            }
+        }
+        
+    }
     
-    /*
-     static fromPrivateKey(privateKey: PrivateKey) {
-     return this.BASE.multiplyPrecomputed(normalizePrivKey(privateKey));
+    // Sparse multiplication against precomputed coefficients
+     func millerLoop(pointG2: PointG2) -> Fp12 {
+//       return millerLoop(P.pairingPrecomputes(), this.toAffine())
+         fatalError()
      }
-     
-     toRawBytes(isCompressed = false) {
-     return hexToBytes(this.toHex(isCompressed));
-     }
-     
-     toHex(isCompressed = false) {
-     this.assertValidity();
-     if (isCompressed) {
-     const { P } = CURVE;
-     let hex;
-     if (this.isZero()) {
-     hex = POW_2_383 + POW_2_382;
-     } else {
-     const [x, y] = this.toAffine();
-     const flag = (y.value * 2n) / P;
-     hex = x.value + flag * POW_2_381 + POW_2_383;
-     }
-     return toPaddedHex(hex, PUBLIC_KEY_LENGTH);
-     } else {
-     if (this.isZero()) {
-     // 2x PUBLIC_KEY_LENGTH
-     return '4'.padEnd(2 * 2 * PUBLIC_KEY_LENGTH, '0'); // bytes[0] |= 1 << 6;
-     } else {
-     const [x, y] = this.toAffine();
-     return toPaddedHex(x.value, PUBLIC_KEY_LENGTH) + toPaddedHex(y.value, PUBLIC_KEY_LENGTH);
-     }
-     }
-     }
-     
-     assertValidity() {
-     if (this.isZero()) return this;
-     if (!this.isOnCurve()) throw new Error('Invalid G1 point: not on curve Fp');
-     if (!this.isTorsionFree()) throw new Error('Invalid G1 point: must be of prime-order subgroup');
-     return this;
-     }
-     
-     [Symbol.for('nodejs.util.inspect.custom')]() {
-     return this.toString();
-     }
-     
-     // Sparse multiplication against precomputed coefficients
-     millerLoop(P: PointG2): Fp12 {
-     return millerLoop(P.pairingPrecomputes(), this.toAffine());
-     }
-     
-     // Clear cofactor of G1
-     // https://eprint.iacr.org/2019/403
-     clearCofactor(): PointG1 {
-     // return this.multiplyUnsafe(CURVE.h);
-     const t = this.mulCurveMinusX();
-     return t.add(this);
-     }
-     
-     // Checks for equation y² = x³ + b
-     private isOnCurve(): boolean {
-     const b = new Fp(CURVE.b);
-     const { x, y, z } = this;
-     const left = y.pow(2n).multiply(z).subtract(x.pow(3n));
-     const right = b.multiply(z.pow(3n));
-     return left.subtract(right).isZero();
-     }
-     
-     // σ endomorphism
-     private sigma(): PointG1 {
-     const BETA =
-     0x1a0111ea397fe699ec02408663d4de85aa0d857d89759ad4897d29650fb85f9b409427eb4f49fffd8bfd00000000aaacn;
-     const [x, y] = this.toAffine();
-     return new PointG1(x.multiply(BETA), y);
-     }
-     
-     // φ endomorphism
-     private phi(): PointG1 {
-     const cubicRootOfUnityModP =
-     0x5f19672fdf76ce51ba69c6076a0f77eaddb3a93be6f89688de17d813620a00022e01fffffffefffen;
-     return new PointG1(this.x.multiply(cubicRootOfUnityModP), this.y, this.z);
-     }
-     
-     // [-0xd201000000010000]P
-     private mulCurveX() {
-     return this.multiplyUnsafe(CURVE.x).negate();
-     }
-     // [0xd201000000010000]P
-     private mulCurveMinusX() {
-     return this.multiplyUnsafe(CURVE.x);
-     }
-     
-     // Checks is the point resides in prime-order subgroup.
-     // point.isTorsionFree() should return true for valid points
-     // It returns false for shitty points.
-     // https://eprint.iacr.org/2021/1130.pdf
-     private isTorsionFree(): boolean {
-     // todo: unroll
-     const xP = this.mulCurveX(); // [x]P
-     const u2P = xP.mulCurveMinusX(); // [u2]P
-     return u2P.equals(this.phi());
-     
-     // https://eprint.iacr.org/2019/814.pdf
-     // (z² − 1)/3
-     // const c1 = 0x396c8c005555e1560000000055555555n;
-     // const P = this;
-     // const S = P.sigma();
-     // const Q = S.double();
-     // const S2 = S.sigma();
-     // // [(z² − 1)/3](2σ(P) − P − σ²(P)) − σ²(P) = O
-     // const left = Q.subtract(P).subtract(S2).multiplyUnsafe(c1);
-     // const C = left.subtract(S2);
-     // return C.isZero();
-     }
-     */
+
+    // Clear cofactor of G1
+    // https://eprint.iacr.org/2019/403
+    func clearCofactor() throws -> Self {
+        let t = try mulCurveMinusX()
+        return t + self
+    }
+
 }
+
+public struct PointG2 {}
 
 extension PointG1 {
     /// `σ endomorphism`
-    func sigma() -> PointG1 {
+    func sigma() throws -> PointG1 {
         let beta = Frobenius.aaac
-        //  let [x, y] = this.toAffine();
-        //  return new PointG1(x.multiply(beta), y);
-        fatalError()
+        let affine = try toAffine()
+        let x = affine.x
+        let y = affine.y
+        return Self.init(x: x * beta, y: y)
     }
     
     // φ endomorphism

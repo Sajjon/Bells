@@ -209,6 +209,12 @@ public extension Fp2 {
             c1: c1 * Frobenius.fp2Coefficients[power % Frobenius.fp2Coefficients.count]
         )
      }
+    
+    func multiplyByB() -> Self {
+        let t0 = c0 * 4
+        let t1 = c1 * 4
+        return .init(c0: t0 - t1, c1: t0 + t1)
+    }
 }
 
 private extension Fp2 {

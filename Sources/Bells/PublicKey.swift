@@ -7,4 +7,9 @@
 
 import Foundation
 
-public struct PublicKey: Equatable {}
+public struct PublicKey: Equatable {
+    public let point: PointG1
+    public init(point: PointG1) {
+        self.point = point
+    }
+}
