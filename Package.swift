@@ -33,13 +33,13 @@ let package = Package(
                 "BigInt",
                 .product(name: "Collections", package: "swift-collections"),
                 .product(name: "RealModule", package: "swift-numerics"),
+                .product(name: "Algorithms", package: "swift-algorithms"),
             ]
         ),
         .testTarget(
             name: "BellsTests",
             dependencies: [
                 "Bells",
-                .product(name: "Algorithms", package: "swift-algorithms"),
                 .product(name: "XCTAssertBytesEqual", package: "BytePattern"),
                 .product(name: "BytesMutation", package: "BytePattern"),
                 "SwiftCheck",

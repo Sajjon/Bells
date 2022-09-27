@@ -24,9 +24,9 @@ class PointTest<P>: XCTestCase where P: ProjectivePoint & Arbitrary {
         }
     }
     
-    func test_point_double_is_mulby2() {
-        property("\(P.self) Point * 2 == Point.doubled") <- forAll { (a: P) in
-            try a.doubled() == (a * 2)
+    func test_point_doubled_3_times_eq_mul_by_8() {
+        property("\(P.self) Point * 8 == Point.doubled.doubled.doubled") <- forAll { (a: P) in
+            try a.doubled().doubled().doubled() == (a * 8)
         }
     }
 }
@@ -35,19 +35,19 @@ final class PointG1Tests: PointTest<PointG1> {
     
     
     
-//    func test_point_multiplication_with_5() throws {
-//        let a = PointG1(
-//            x: .init(hex: "17f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb"),
-//            y: .init(hex: "08b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a2888ae40caa232946c5e7e1"),
-//            z: .one
-//        )
-//
-//        let a5 = try a.unsafeMultiply(scalar: 5)
-//        XCTAssertEqual(a5.x.toString(radix: 16, pad: true), "01ee86694b38a2513cd24a4648773811645bfc47087f1c758135cd25e871b090ab541a3370f9ade7551308d4fba7dd8b")
-//        XCTAssertEqual(a5.y.toString(radix: 16, pad: true), "19f31db260c65c64bf01338623dfa71f1c4b9429f19ff8c9c776157d267a44fe6eb83608557ccffef8a31a71e3573d8d")
-//        XCTAssertEqual(a5.z.toString(radix: 16, pad: true), "0346f0c9f5a5ab5c4454b77bc42d4d63dfead096169aede021098aae8c95e20b8b0425dde1b6a7ed9ee882defee1c6ee")
-//
-//    }
+    func skip_test_point_multiplication_with_5() throws {
+        let a = PointG1(
+            x: .init(hex: "17f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb"),
+            y: .init(hex: "08b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a2888ae40caa232946c5e7e1"),
+            z: .one
+        )
+
+        let a5 = try a.unsafeMultiply(scalar: 5)
+        XCTAssertEqual(a5.x.toString(radix: 16, pad: true), "01ee86694b38a2513cd24a4648773811645bfc47087f1c758135cd25e871b090ab541a3370f9ade7551308d4fba7dd8b")
+        XCTAssertEqual(a5.y.toString(radix: 16, pad: true), "19f31db260c65c64bf01338623dfa71f1c4b9429f19ff8c9c776157d267a44fe6eb83608557ccffef8a31a71e3573d8d")
+        XCTAssertEqual(a5.z.toString(radix: 16, pad: true), "0346f0c9f5a5ab5c4454b77bc42d4d63dfead096169aede021098aae8c95e20b8b0425dde1b6a7ed9ee882defee1c6ee")
+
+    }
 //
 //
 //    func test_point_multiplication_with_3() throws {
