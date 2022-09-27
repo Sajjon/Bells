@@ -204,6 +204,30 @@ final class PointG1Tests: PointTest<PointG1> {
         XCTAssertEqual(doubled, a + a)
         XCTAssertEqual(doubled, try a * 2)
     }
+    
+    func test_doubled_on_curve_vector2() {
+        let a = PointG1(
+            x: .init(value: BigInt("3924344720014921989021119511230386772731826098545970939506931087307386672210285223838080721449761235230077903044877", radix: 10)!),
+            y: .init(value: BigInt("849807144208813628470408553955992794901182511881745746883517188868859266470363575621518219643826028639669002210378", radix: 10)!),
+            z: .init(value: BigInt("3930721696149562403635400786075999079293412954676383650049953083395242611527429259758704756726466284064096417462642", radix: 10)!)
+        )
+ 
+        let doubled = a.doubled()
+
+        XCTAssertEqual(
+            doubled,
+            .init(
+                x: .init(value: BigInt("1434314241472461137481482360511979492412320309040868403221478633648864894222507584070840774595331376671376457941809", radix: 10)!),
+                y: .init(value: BigInt("1327071823197710441072036380447230598536236767385499051709001927612351186086830940857597209332339198024189212158053", radix: 10)!),
+                z: .init(value: BigInt("3846649914824545670119444188001834433916103346657636038418442067224470303304147136417575142846208087722533543598904", radix: 10)!)
+            )
+        )
+        
+        XCTAssertNoThrow(try doubled.assertValidity())
+        
+        XCTAssertEqual(doubled, a + a)
+        XCTAssertEqual(doubled, try a * 2)
+    }
 }
 
 extension PointG1: Arbitrary {
