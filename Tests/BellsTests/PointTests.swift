@@ -9,6 +9,7 @@ import Foundation
 @testable import Bells
 import XCTest
 import SwiftCheck
+import BigInt
 
 class PointTest<P>: XCTestCase where P: ProjectivePoint & Arbitrary {
     
@@ -29,6 +30,20 @@ class PointTest<P>: XCTestCase where P: ProjectivePoint & Arbitrary {
             try a.doubled().doubled().doubled() == (a * 8)
         }
     }
+    
+    func test_p_unsafe_mul_x_eq_mul_x() {
+        property("\(P.self) p unsafeMul x eq p mul x") <- forAll { (a: P) in
+            exists { (x: BigInt) in
+                (try a * x) == (try a.unsafeMultiply(scalar: x))
+            }
+        }
+    }
+    
+    func test_p_unsafe_mul_largeInt_eq_mul_largeInt() {
+        property("\(P.self) p unsafeMul x eq p mul x") <- forAll { (a: P) in
+            (try a * 0xffff_ffff_ffff) == (try a.unsafeMultiply(scalar: 0xffff_ffff_ffff))
+        }
+    }
 }
 
 final class PointG1Tests: PointTest<PointG1> {
@@ -43,9 +58,9 @@ final class PointG1Tests: PointTest<PointG1> {
         )
 
         let a5 = try a.unsafeMultiply(scalar: 5)
-        XCTAssertEqual(a5.x.toString(radix: 16, pad: true), "01ee86694b38a2513cd24a4648773811645bfc47087f1c758135cd25e871b090ab541a3370f9ade7551308d4fba7dd8b")
-        XCTAssertEqual(a5.y.toString(radix: 16, pad: true), "19f31db260c65c64bf01338623dfa71f1c4b9429f19ff8c9c776157d267a44fe6eb83608557ccffef8a31a71e3573d8d")
-        XCTAssertEqual(a5.z.toString(radix: 16, pad: true), "0346f0c9f5a5ab5c4454b77bc42d4d63dfead096169aede021098aae8c95e20b8b0425dde1b6a7ed9ee882defee1c6ee")
+        XCTAssertEqual(a5.x.toString(radix: 16, pad: false), "01ee86694b38a2513cd24a4648773811645bfc47087f1c758135cd25e871b090ab541a3370f9ade7551308d4fba7dd8b")
+        XCTAssertEqual(a5.y.toString(radix: 16, pad: false), "19f31db260c65c64bf01338623dfa71f1c4b9429f19ff8c9c776157d267a44fe6eb83608557ccffef8a31a71e3573d8d")
+        XCTAssertEqual(a5.z.toString(radix: 16, pad: false), "0346f0c9f5a5ab5c4454b77bc42d4d63dfead096169aede021098aae8c95e20b8b0425dde1b6a7ed9ee882defee1c6ee")
 
     }
 //
