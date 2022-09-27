@@ -10,6 +10,7 @@ public struct PrivateKey {
         self.scalar = scalar
     }
 }
+
 public extension PrivateKey {
     
     enum Error: Swift.Error {
@@ -17,6 +18,8 @@ public extension PrivateKey {
     }
     
     func publicKey() -> PublicKey {
-        try! .init(point: PointG1.base.multiplyPrecomputed(scalar: scalar))
+        try! .init(
+            point: PointG1.generator.multiplyPrecomputed(scalar: scalar)
+        )
     }
 }

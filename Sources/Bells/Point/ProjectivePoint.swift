@@ -9,35 +9,64 @@ import Foundation
 import BigInt
 
 // MARK: ProjectivePoint
-public protocol ProjectivePoint<F>: SignedNumeric_, AdditiveArithmetic, Equatable {
+
+/// A projective point over some *finite* **field** `F`, has three components
+/// x, y and z. It is faster to work with projective points than affine, but it can be
+/// converted into affine and back into projective from affine.
+///
+/// When mapping into affine point we multiply the X and Y respectively
+/// with the inverse of `Z`. `Xa=Xp/Zp, Ya=Yp/Zp`
+public protocol ProjectivePoint<F>:
+    SignedNumeric_,
+    AdditiveArithmetic,
+    Equatable
+{
+    /// The finite field of which x, y, z are all elements.
+    associatedtype F: FiniteField
     
-    // Intended for internal use
+    /// Intended for internal use, used to increase performance.
     var __storageForPrecomputes: [Int: [Self]] { get set }
     
-    associatedtype F: FiniteField
+    /// Checks if this point is indeed on the curve.
+    func isOnCurve() -> Bool
+    
+    /// X component, element of the finite field `F`.
     var x: F { get }
+    
+    /// Y component, element of the finite field `F`.
     var y: F { get }
+    
+    /// Z component, element of the finite field `F`.
     var z: F { get }
+    
+    /// Canonocal initializer.
     init(x: F, y: F, z: F)
+    
+    /// Converts an affine point into this projective point.
+    init(affine: AffinePoint<F>)
+   
+    /// Deserialize a point from data (bytes).
     init(bytes: some ContiguousBytes) throws
     
-    static var base: Self { get }
-    
-    var isZero: Bool { get }
-    static func == (lhs: Self, rhs: some ProjectivePoint<F>) -> Bool
+    /// The generator point of a group this projective point is an element of.
+    static var generator: Self { get }
     static var zero: Self { get }
     
+    var isZero: Bool { get }
+    
+    /// Efficient multiplication by scalar 2.
     func doubled() -> Self
     
     /// Converts Projective point to default (x, y) coordinates.
     /// Can accept precomputed Z^-1 - for example, from invertBatch.
     func toAffine(invertedZ: F?) throws -> AffinePoint<F>
     
+    /// Serialize point into data (bytes). Might be on compressed form.
     func toData(compress: Bool) -> Data
+    
+    /// String representation of this point.
     func toString(radix: Int, pad: Bool) -> String
-    
-    func isOnCurve() -> Bool
-    
+
 }
 
 public extension ProjectivePoint {
@@ -307,7 +336,6 @@ private extension ProjectivePoint {
 //        return (p, f)
         return p
     }
-   
     
     func precompute(window w: Int) -> [Self] {
         // Split scalar by W bits, last window can be smaller
