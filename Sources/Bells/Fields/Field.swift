@@ -9,7 +9,7 @@ import BigInt
 import Foundation
 
 /// Finite field
-public protocol Field: AdditiveArithmetic, CustomStringConvertible, CustomDebugStringConvertible {
+public protocol Field: Equatable, AdditiveArithmetic, CustomStringConvertible, CustomDebugStringConvertible {
     func negated() -> Self
     func inverted() throws -> Self
     static func * (lhs: Self, rhs: Self) -> Self

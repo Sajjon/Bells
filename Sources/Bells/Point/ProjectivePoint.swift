@@ -8,8 +8,12 @@
 import Foundation
 import BigInt
 
-public protocol ProjectivePoint<F> {
+// MARK: ProjectivePoint
+public protocol ProjectivePoint<F>: AdditiveArithmetic, Equatable {
+    
+    // Intended for internal use
     var __storageForPrecomputes: [Int: [Self]] { get set }
+    
     associatedtype F: FiniteField
     var x: F { get }
     var y: F { get }
@@ -29,6 +33,19 @@ public protocol ProjectivePoint<F> {
     
     func toString(radix: Int, pad: Bool) -> String
     
+}
+
+// MARK: Debugging
+public extension ProjectivePoint {
+    func toString(radix: Int = 16, pad: Bool = false) -> String {
+        """
+        \(Self.self)(
+            x: \(x.toString(radix: radix, pad: pad)),
+            y: \(y.toString(radix: radix, pad: pad)),
+            z: \(z.toString(radix: radix, pad: pad))
+        )
+        """
+    }
 }
 
 public extension ProjectivePoint {
@@ -85,16 +102,6 @@ public extension ProjectivePoint {
     
     static func normalizeZ(points: [Self]) throws -> [Self] {
         try toAffineBatch(points: points).map(Self.init(affine:))
-    }
-    
-    func toString(radix: Int = 16, pad: Bool = false) -> String {
-        """
-        \(Self.self)(
-            x: \(x.toString(radix: radix, pad: pad)),
-            y: \(y.toString(radix: radix, pad: pad)),
-            z: \(z.toString(radix: radix, pad: pad))
-        )
-        """
     }
     
     /// http://hyperelliptic.org/EFD/g1p/auto-shortw-projective.html#doubling-dbl-1998-cmo-2
@@ -205,6 +212,10 @@ public extension ProjectivePoint {
         }
         return point
     }
+}
+
+// MARK: Precompute
+public extension ProjectivePoint {
     
     mutating func calcMultiplyPrecomputes(w: Int) throws {
         guard __storageForPrecomputes[w] == nil else {
