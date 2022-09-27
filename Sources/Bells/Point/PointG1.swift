@@ -95,13 +95,24 @@ public extension ProjectivePoint {
             x: .one, y: .one, z: .zero
         )
     }
+    
     static func == (lhs: Self, rhs: some ProjectivePoint<F>) -> Bool {
-        let a = lhs
+        lhs.isEqual(to: rhs)
+    }
+    
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.isEqual(to: rhs)
+    }
+    
+    func isEqual(to rhs: some ProjectivePoint<F>) -> Bool {
+        let a = self
         let b = rhs
         let xEquals = (a.x * b.z) == (b.x * a.z)
         let yEquals = (a.y * b.z) == (b.y * a.z)
-        return xEquals && yEquals
+        let isEqual = xEquals && yEquals
+        return isEqual
     }
+    
     func negated() -> Self {
         Self.init(x: x, y: y.negated(), z: z)
     }
@@ -219,15 +230,12 @@ public extension ProjectivePoint {
     
     /// OK for signature verification, UNSAFE for anythyng relating to private key operations.
     func unsafeMultiply(scalar: BigInt) throws -> Self {
-//        print("✨ multiplyUnsafe scalar = \(scalar.toHexString()), self: \(self.toString(radix: 16))")
         var n = try Self.validate(scalar: scalar)
         var point = Self.zero
         var d = self
         
         while n > 0 {
-//            print("n: \(n), d: \(d), point: \(point)")
             if (n & 1) != 0 {
-//                print("🔮 point += d, @n=\(n)")
                 point += d
             }
             d.double()
