@@ -163,23 +163,25 @@ public extension ProjectivePoint {
     // http://hyperelliptic.org/EFD/g1p/auto-shortw-projective.html#addition-add-1998-cmo-2
     // Cost: 12M + 2S + 6add + 1*2.
     static func + (lhs: Self, rhs: Self) -> Self {
+        let p1 = lhs
+        let p2 = rhs
+        guard !p1.isZero else { return p2 }
+        guard !p2.isZero else { return p1 }
         
-        guard !lhs.isZero else { return rhs }
-        guard !rhs.isZero else { return lhs }
+        let X1 = p1.x
+        let Y1 = p1.y
+        let Z1 = p1.z
         
-        let X1 = lhs.x
-        let Y1 = lhs.y
-        let Z1 = lhs.z
-        let X2 = rhs.x
-        let Y2 = rhs.y
-        let Z2 = rhs.z
+        let X2 = p2.x
+        let Y2 = p2.y
+        let Z2 = p2.z
         
         let U1 = Y2 * Z1
         let U2 = Y1 * Z2
         let V1 = X2 * Z1
         let V2 = X1 * Z2
         
-        if V1 == V2 && U1 == U2 { return lhs.doubled() }
+        if V1 == V2 && U1 == U2 { return p1.doubled() }
         if V1 == V2 && U1 != U2 { return Self.zero }
         
         let U = U1 - U2
@@ -190,7 +192,8 @@ public extension ProjectivePoint {
         let Z1Z2 = Z1 * Z2
         let A = U * U * Z1Z2 - VVV - V2VV * 2
         let X3 = V * A
-        let Y3 = U * V2VV - A - VVV * U2
+        
+        let Y3 = (U * (V2VV - A)) - (VVV * U2)
         let Z3 = VVV * Z1Z2
         
         return Self(x: X3, y: Y3, z: Z3)
@@ -456,12 +459,6 @@ public extension PointG1 {
         let xP = try mulCurveX() // [x]P
         let u2P = try xP.mulCurveMinusX() // [u2]P
         let _phi = phi()
-        print("xP: \(xP.toString(radix: 16, pad: true))")
-        print("xP.affine: \(try! xP.toAffine().toString(radix: 16, pad: true))")
-        print("u2P: \(u2P.toString(radix: 16, pad: true))")
-        print("u2P.affine: \(try! u2P.toAffine().toString(radix: 16, pad: true))")
-        print("_phi: \(_phi.toString(radix: 16, pad: true))")
-        print("_phi.affine: \(try! _phi.toAffine().toString(radix: 16, pad: true))")
         return u2P == _phi
         
         // https://eprint.iacr.org/2019/814.pdf

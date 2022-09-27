@@ -30,7 +30,12 @@ final class FpTests: FieldTest<Fp> {
             (a * Fp(value: 4)) == (a + a + a + a)
         }
     }
-
+    
+    func test_multiplication_known_product() {
+        let s = Fp(hex: "08b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a5888ae40caa532946c5e7e1")
+        let ss = s * s
+        XCTAssertEqual(ss.toHexString(), "11bd4610bd54f31efd43b2875b577dfb5298de4a4f230c47a74b117fb392ca098259932bbd672d9ebb861bb35b17939f")
+    }
 }
 
 extension Fp: Arbitrary {
