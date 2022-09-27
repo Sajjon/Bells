@@ -9,7 +9,7 @@ import Foundation
 import BigInt
 
 // MARK: ProjectivePoint
-public protocol ProjectivePoint<F>: AdditiveArithmetic, Equatable {
+public protocol ProjectivePoint<F>: SignedNumeric_, AdditiveArithmetic, Equatable {
     
     // Intended for internal use
     var __storageForPrecomputes: [Int: [Self]] { get set }
@@ -19,20 +19,31 @@ public protocol ProjectivePoint<F>: AdditiveArithmetic, Equatable {
     var y: F { get }
     var z: F { get }
     init(x: F, y: F, z: F)
+    init(bytes: some ContiguousBytes) throws
     
     static var base: Self { get }
     
     var isZero: Bool { get }
     static func == (lhs: Self, rhs: some ProjectivePoint<F>) -> Bool
     static var zero: Self { get }
-    func negated() -> Self
+    
+    func doubled() -> Self
     
     /// Converts Projective point to default (x, y) coordinates.
     /// Can accept precomputed Z^-1 - for example, from invertBatch.
     func toAffine(invertedZ: F?) throws -> AffinePoint<F>
     
+    func toData(compress: Bool) -> Data
     func toString(radix: Int, pad: Bool) -> String
     
+    func isOnCurve() -> Bool
+    
+}
+
+public extension ProjectivePoint {
+    mutating func double() {
+        self = self.doubled()
+    }
 }
 
 // MARK: Debugging
@@ -119,10 +130,6 @@ public extension ProjectivePoint {
         return Self(x: X3, y: Y3, z: Z3)
     }
     
-    mutating func double() {
-        self = self.doubled()
-    }
-    
     // http://hyperelliptic.org/EFD/g1p/auto-shortw-projective.html#addition-add-1998-cmo-2
     // Cost: 12M + 2S + 6add + 1*2.
     static func + (lhs: Self, rhs: Self) -> Self {
@@ -161,19 +168,6 @@ public extension ProjectivePoint {
         
         return Self(x: X3, y: Y3, z: Z3)
     }
-    
-    static func += (lhs: inout Self, rhs: Self) {
-        lhs = lhs + rhs
-    }
-    
-    static func - (lhs: Self, rhs: Self) -> Self {
-        lhs + rhs.negated()
-    }
-   
-    static func -= (lhs: inout Self, rhs: Self) {
-        lhs = lhs - rhs
-    }
-    
     
     /// OK for signature verification, UNSAFE for anythyng relating to private key operations.
     func unsafeMultiply(scalar: BigInt) throws -> Self {

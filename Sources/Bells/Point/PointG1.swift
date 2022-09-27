@@ -12,6 +12,7 @@ import RealModule
 // Point on G1 curve: (x, y)
 // We add z because we work with projective coordinates instead of affine x-y: that's much faster.
 public struct PointG1: ProjectivePoint, Equatable {
+  
     public var __storageForPrecomputes: [Int: [Self]] = [:]
     public typealias F = Fp
     
