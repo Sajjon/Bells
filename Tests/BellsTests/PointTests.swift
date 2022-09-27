@@ -228,6 +228,16 @@ final class PointG1Tests: PointTest<PointG1> {
         XCTAssertEqual(doubled, a + a)
         XCTAssertEqual(doubled, try a * 2)
     }
+    
+    func test_should_not_validate_incorrect_point() {
+
+        let p = PointG1(
+            x: .init(value: BigInt("499001545268060011619089734015590154568173930614466321429631711131511181286230338880376679848890024401335766847607", radix: 10)!),
+            y: .init(value: BigInt("3934582309586258715640230772291917282844636728991757779640464479794033391537662970190753981664259511166946374555673", radix: 10)!)
+        )
+
+        XCTAssertThrowsError(try p.assertValidity())
+    }
 }
 
 extension PointG1: Arbitrary {
