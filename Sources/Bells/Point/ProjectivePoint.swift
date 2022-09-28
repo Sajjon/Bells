@@ -17,7 +17,9 @@ import BigInt
 /// When mapping into affine point we multiply the X and Y respectively
 /// with the inverse of `Z`. `Xa=Xp/Zp, Ya=Yp/Zp`
 public protocol ProjectivePoint<F>:
+    CustomToStringConvertible,
     SignedNumeric_,
+    ThrowingMultipliableByScalarArtithmetic,
     AdditiveArithmetic,
     Equatable
 {
@@ -52,19 +54,28 @@ public protocol ProjectivePoint<F>:
     static var generator: Self { get }
     static var zero: Self { get }
     
+    /// Checks if this element is the `zero` element.
+    ///
+    /// Default implementation provided.
     var isZero: Bool { get }
     
     /// Efficient multiplication by scalar 2.
+    ///
+    /// Default implementation provided.
     func doubled() -> Self
     
     /// Converts Projective point to default (x, y) coordinates.
     /// Can accept precomputed Z^-1 - for example, from invertBatch.
+    ///
+    /// Default implementation provided.
     func toAffine(invertedZ: F?) throws -> AffinePoint<F>
     
     /// Serialize point into data (bytes). Might be on compressed form.
     func toData(compress: Bool) -> Data
     
     /// String representation of this point.
+    ///
+    /// Default implementation provided.
     func toString(radix: Int, pad: Bool) -> String
 
 }
@@ -85,6 +96,22 @@ public extension ProjectivePoint {
             z: \(z.toString(radix: radix, pad: pad))
         )
         """
+    }
+    
+    var description: String {
+        toDecimalString(pad: false)
+    }
+    
+    func toDecimalString(pad: Bool = false) -> String {
+        toString(radix: 10, pad: pad)
+    }
+    
+    func toHexString(pad: Bool = true) -> String {
+        toString(radix: 16, pad: pad)
+    }
+    
+    var debugDescription: String {
+        toHexString(pad: true)
     }
 }
 
@@ -159,8 +186,8 @@ public extension ProjectivePoint {
         return Self(x: X3, y: Y3, z: Z3)
     }
     
-    // http://hyperelliptic.org/EFD/g1p/auto-shortw-projective.html#addition-add-1998-cmo-2
-    // Cost: 12M + 2S + 6add + 1*2.
+    /// http://hyperelliptic.org/EFD/g1p/auto-shortw-projective.html#addition-add-1998-cmo-2
+    /// Cost: 12M + 2S + 6add + 1*2.
     static func + (lhs: Self, rhs: Self) -> Self {
         let p1 = lhs
         let p2 = rhs
