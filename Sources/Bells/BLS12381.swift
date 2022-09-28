@@ -9,6 +9,7 @@ import Foundation
 import BigInt
 import Algorithms
 import Collections
+import CryptoKit // SHA256
 
 /// Utilities for 3-isogeny map from E' to E.
 internal enum Isogeny {
@@ -227,4 +228,207 @@ internal extension BLS {
         }
         return f12.conjugate()
     }
+    
+    /// Implementation of algorithm [`expand_message_xmd`][reference].
+    ///
+    ///     expand_message_xmd(msg, DST, len_in_bytes)
+    ///
+    ///     Parameters:
+    ///     - H, a hash function (see requirements above).
+    ///     - b_in_bytes, b / 8 for b the output size of H in bits.
+    ///       For example, for b = 256, b_in_bytes = 32.
+    ///     - r_in_bytes, the input block size of H, measured in bytes (see
+    ///       discussion above). For example, for SHA-256, r_in_bytes = 64.
+    ///
+    ///     Input:
+    ///     - msg, a byte string.
+    ///     - DST, a byte string of at most 255 bytes.
+    ///       See below for information on using longer DSTs.
+    ///     - len_in_bytes, the length of the requested output in bytes.
+    ///
+    ///     Output:
+    ///     - uniform_bytes, a byte string.
+    ///
+    ///     Steps:
+    ///     1.  ell = ceil(len_in_bytes / b_in_bytes)
+    ///     2.  ABORT if ell > 255
+    ///     3.  DST_prime = DST || I2OSP(len(DST), 1)
+    ///     4.  Z_pad = I2OSP(0, r_in_bytes)
+    ///     5.  l_i_b_str = I2OSP(len_in_bytes, 2)
+    ///     6.  msg_prime = Z_pad || msg || l_i_b_str || I2OSP(0, 1) || DST_prime
+    ///     7.  b_0 = H(msg_prime)
+    ///     8.  b_1 = H(b_0 || I2OSP(1, 1) || DST_prime)
+    ///     9.  for i in (2, ..., ell):
+    ///     10.    b_i = H(strxor(b_0, b_(i - 1)) || I2OSP(i, 1) || DST_prime)
+    ///     11. uniform_bytes = b_1 || ... || b_ell
+    ///     12. return substr(uniform_bytes, 0, len_in_bytes)
+    ///
+    /// [reference]: https://www.ietf.org/archive/id/draft-irtf-cfrg-hash-to-curve-10.html#name-expand_message_xmd-2
+    static func expandMessageXMD(
+        toLength outputByteCount: Int,
+        message: Data,
+        domainSeperationTag: DomainSeperationTag
+    ) async throws -> Data {
+        
+        let bInBytes = SHA256.byteCount
+        let rInBytes = bInBytes * 2
+        let ell = Int(ceil(Double(outputByteCount) / Double(bInBytes)))
+        guard ell <= 255 else {
+            struct InvalidXMDLength: Error {}
+            throw InvalidXMDLength()
+        }
+        
+        let dst = domainSeperationTag.dataNoLongerThan255ElseHashed(mode: .expandMessageXMD)
+        return try await Task {
+            let dstPrime = dst + i2osp(dst.count, 1)
+            let zPad = i2osp(0, rInBytes)
+            let outputByteCountData = i2osp(outputByteCount, 2)
+            let messagePrime = Data(SHA256.hash(data: zPad + message + outputByteCountData + i2osp(0, 1) + dstPrime))
+            
+            var b: [Data] = []
+            
+            b.append(
+                Data(
+                    SHA256.hash(
+                        data: messagePrime + i2osp(1, 1) + dstPrime
+                    )
+                )
+            )
+            for i in 1...ell {
+                let hashInput0 = Data(zip(messagePrime, b.last!).map { $0 ^ $1 })
+                let hashInput = hashInput0 + i2osp(i + 1, 1) + dstPrime
+                let hash = Data(SHA256.hash(
+                    data: hashInput
+                ))
+                b.append(hash)
+            }
+            let pseudoRandomBytes: Data = b.reduce(Data(), +)
+            assert(pseudoRandomBytes.count >= outputByteCount)
+            return pseudoRandomBytes.prefix(outputByteCount)
+        }.result.get()
+    }
+    
+    static func hashToField(
+        message: Data,
+        elementCount: Int,
+        config: HashToFieldConfig = .defaultForHashToG2
+    ) async throws -> [[BigInt]] {
+        let L = config.L
+        let byteCount = L * elementCount * config.m
+        var pseudoRandomBytes = message
+        if config.expand {
+            pseudoRandomBytes = try await expandMessageXMD(
+                toLength: byteCount,
+                message: message,
+                domainSeperationTag: config.domainSeperationTag
+            )
+        }
+        var u: [[BigInt]] = []
+        for i in 0..<elementCount {
+            var e: [BigInt] = []
+            for j in 0..<config.m {
+                let elmOffset = L * (j + i * config.m)
+                let tv = pseudoRandomBytes[elmOffset..<elmOffset+L]
+                let eElement = mod(a: BigInt(tv), b: config.p)
+                e.append(eElement)
+            }
+            u.append(e)
+        }
+        return u
+    }
 }
+
+public struct DomainSeperationTag: Equatable, ExpressibleByStringLiteral {
+    internal let _data: Data
+    public enum Mode {
+        case expandMessageXOF
+        case expandMessageXMD
+    }
+    
+    /// https://www.ietf.org/archive/id/draft-irtf-cfrg-hash-to-curve-10.html#section-5.4.3
+    public func dataNoLongerThan255ElseHashed(mode: Mode = .expandMessageXMD) -> Data {
+        if _data.count <= 255 {
+            return _data
+        } else {
+            let prefixData = "H2C-OVERSIZE-DST-".data(using: .ascii)!
+            switch mode {
+            case .expandMessageXMD:
+                return Data(SHA256.hash(data: prefixData + _data))
+            case .expandMessageXOF:
+                fatalError("Unsupported")
+            }
+        }
+    }
+//    public var count: Int { _data.count }
+    public init(data: Data) {
+        precondition(data.count > 0)
+        precondition(data.count <= 2048)
+        self._data = data
+    }
+    
+      // https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-hash-to-curve-11#section-3.1
+    public init(_ string: String) {
+        self.init(data: string.data(using: .utf8)!)
+    }
+    public init(stringLiteral value: String) {
+        self.init(value)
+    }
+    
+    // https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-hash-to-curve-11#section-8.8.2
+    public static let g2: Self = "BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_NUL_"
+}
+
+public struct HashToFieldConfig: Equatable {
+    /// Domain seperation tag, aka `DST`.
+    public let domainSeperationTag: DomainSeperationTag
+    /// The characteristic of F, where `F` is a finite field of *characteristic* `p` and *order* `q = p^m`
+    public let p: BigInt
+    
+    /// The extension degree of F, m >= 1, where F is a finite field of characteristic p and order q = p^m
+    public let m: Int
+
+    /// The target security level for the suite in bits [defined in reference][reference]
+    ///
+    /// [reference]: https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-hash-to-curve-11#section-5.1
+    public let k: Int
+    
+    /// option to use a message that has already been processed by
+    /// expand_message_xmd
+    public let expand: Bool
+}
+public extension HashToFieldConfig {
+    static let defaultForHashToG2 = Self(
+        domainSeperationTag: DomainSeperationTag.g2,
+        p: Curve.P,
+        m: 2,
+        k: 128,
+        expand: true
+    )
+}
+
+public extension HashToFieldConfig {
+    
+    /// https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-hash-to-curve-11#section-5.1
+    var L: Int {
+        let log2p = p.bitWidthIgnoreSign
+        let L = ceil((Double(log2p) + Double(k)) / 8)
+        return Int(L)
+    }
+}
+
+
+func i2osp(_ value: Int, _ length: Int) -> Data {
+    let preconditionFailureMessage = "Bad I2OSP call, value: \(value), length: \(length)"
+    precondition(value >= 0, preconditionFailureMessage)
+//    if value >= (1 << (8 * length)) {
+//        preconditionFailure(preconditionFailureMessage)
+//    }
+    var value = value
+    var result = Data(repeating: 0x00, count: length)
+    for i in 0..<length {
+        result[length - 1 - i] = UInt8(value & 0xff)
+        value >>= 8
+    }
+    return result
+}
+

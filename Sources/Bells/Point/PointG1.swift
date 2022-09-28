@@ -82,7 +82,7 @@ public extension PointG1 {
 
 // MARK: ProjectivePoint
 public extension PointG1 {
-    /// Checks that equation is fulfilled: `y² = x³ + b`    ///
+    /// Checks that equation is fulfilled: `y² = x³ + b`
     func isOnCurve() -> Bool {
         do {
             return try _isOnCurve()
