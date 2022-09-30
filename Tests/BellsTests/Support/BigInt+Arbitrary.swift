@@ -27,27 +27,31 @@ extension BigInt {
         let uintByteCount = Word.bitWidth / 8
         precondition(byteCount.isMultiple(of:  uintByteCount))
         let bytes = secureRandomBytes(byteCount: byteCount)
-        return Self(bytes: bytes)
+        return Self(data: Data(bytes))
     }
     
-    init(bytes: [UInt8]) {
-        let uintByteCount = Word.bitWidth / 8
-        precondition(bytes.count.isMultiple(of:  uintByteCount))
-        
-        let words: [Word] = bytes.chunks(ofCount: uintByteCount).map { chunk in
-            chunk.withUnsafeBytes {
-                $0.load(as: Word.self)
-            }
-        }
-        self.init(words: words)
+    init(data: Data) {
+        self.init(sign: .plus, magnitude: .init(data))
     }
+    
+//    init(bytes: [UInt8]) {
+//        let uintByteCount = Word.bitWidth / 8
+//        precondition(bytes.count.isMultiple(of:  uintByteCount))
+//
+//        let words: [Word] = bytes.chunks(ofCount: uintByteCount).map { chunk in
+//            chunk.withUnsafeBytes {
+//                $0.load(as: Word.self)
+//            }
+//        }
+//        self.init(words: words)
+//    }
 }
 
 extension BigInt: Arbitrary {
     public static var arbitrary: Gen<Self> {
         .compose { composer in
             let bytes = (0..<48).map { _ in composer.generate(using: UInt8.arbitrary) }
-            return Self(bytes: bytes)
+            return Self(data: Data(bytes))
         }
     }
 }

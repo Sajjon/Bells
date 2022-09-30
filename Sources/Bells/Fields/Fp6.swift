@@ -72,10 +72,6 @@ public extension Fp6 {
 
 }
 
-/// `1 / F2(2)^((p-1)/3) in GF(p²)`
-internal let psi2C1 = Frobenius.aaac
-
-
 internal enum Frobenius {
     static let aaaa = BigInt("1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaaa", radix: 16)!
     

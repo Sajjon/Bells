@@ -17,7 +17,8 @@ public protocol CustomToStringConvertible:
 public extension CustomToStringConvertible {
     
     var description: String {
-        toDecimalString(pad: false)
+//        toDecimalString(pad: false)
+        toHexString(pad: true)
     }
     
     func toDecimalString(pad: Bool = false) -> String {

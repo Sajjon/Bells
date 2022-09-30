@@ -7,11 +7,11 @@
 
 import Foundation
 
-internal struct SimpleProjectivePoint<F: Field> {
+public struct SimpleProjectivePoint<F: Field> {
     let x: F
     let y: F
     let z: F
 }
 
-typealias ProjectivePointFp2 = SimpleProjectivePoint<Fp2>
+public typealias ProjectivePointFp2 = SimpleProjectivePoint<Fp2>
 

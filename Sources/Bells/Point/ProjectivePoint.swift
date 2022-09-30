@@ -99,7 +99,8 @@ public extension ProjectivePoint {
     }
     
     var description: String {
-        toDecimalString(pad: false)
+//        toDecimalString(pad: false)
+        toHexString(pad: true)
     }
     
     func toDecimalString(pad: Bool = false) -> String {
@@ -116,6 +117,15 @@ public extension ProjectivePoint {
 }
 
 public extension ProjectivePoint {
+    
+    init(simpleProjective: SimpleProjectivePoint<F>) {
+        self.init(
+            x: simpleProjective.x,
+            y: simpleProjective.y,
+            z: simpleProjective.z
+        )
+    }
+    
     var isZero: Bool { z.isZero }
     
     static var zero: Self {
@@ -160,7 +170,7 @@ public extension ProjectivePoint {
     }
     
     static func toAffineBatch(points: [some ProjectivePoint<F>]) throws -> [AffinePoint<F>] {
-        let toInv = try UNTESTED_genInvertBatch(
+        let toInv = try BLS.generateInvertedBatch(
             fieldType: F.self,
             numbers: points.map { $0.z }
         )
@@ -288,30 +298,6 @@ public extension ProjectivePoint {
 
 // MARK: Private
 private extension ProjectivePoint {
-    
-    static func UNTESTED_genInvertBatch<F: Field>(fieldType: F.Type, numbers: [F]) throws -> [F] {
-        
-        var tmp = [F].init(repeating: F.zero, count: numbers.count)
-        
-        let lastMultiplied: F = numbers.enumerated().reduce(F.one) { acc, enumeratedTuple in
-            let (numberIndex, number) = enumeratedTuple
-            guard !number.isZero else { return acc }
-            tmp[numberIndex] = acc
-            return acc * number
-        }
-        
-        let inverted = try lastMultiplied.inverted()
-        
-        _ = numbers.reversed().enumerated().reduce(inverted) { acc, enumeratedTuple in
-            let (numberIndex, number) = enumeratedTuple
-            guard !number.isZero else { return acc }
-            tmp[numberIndex] = acc * tmp[numberIndex]
-            return acc * number
-        }
-        
-        return tmp
-    }
-    
     
     func wNAF(n: BigInt) -> Self /*, Self)*/ {
         var n = n

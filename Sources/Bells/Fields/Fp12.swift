@@ -86,6 +86,13 @@ public extension Fp12 {
             c1: (c1 + c0).multiplyBy01(b0: o0, b1: o1 + o4) - t0 - t1
         )
     }
+    
+    static func * (lhs: Self, rhs: Fp2) -> Fp12 {
+        .init(
+            c0: lhs.c0 * rhs,
+            c1: lhs.c1 * rhs
+        )
+    }
 
     static func / (lhs: Self, rhs: BigInt) throws -> Self {
         let inv = try Fp(value: rhs).inverted().value
