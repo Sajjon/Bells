@@ -61,7 +61,7 @@ public extension Curve {
         y: BigInt("0606c4a02ea734cc32acd2b02bc28b99cb3e287e85a763af267492ab572e99ab3f370d275cec1da1aaa9075ff05f79be", radix: 16)!
     )
     
-    static let b2 = [4, 4]
+    static let b2 = (4, 4)
     
     /// The BLS parameter x for BLS12-381
     static let x = BigInt("d201000000010000", radix: 16)!

@@ -8,6 +8,15 @@
 import Foundation
 import BigInt
 
+
+public final class StorageOfPrecomputedProjectivePoints<Point: ProjectivePoint> {
+    internal var pointsDictionary: [Int: [Point]]
+    internal init(pointsDictionary: [Int: [Point]] = [:]) {
+        self.pointsDictionary = pointsDictionary
+    }
+}
+
+
 // MARK: ProjectivePoint
 
 /// A projective point over some *finite* **field** `F`, has three components
@@ -27,7 +36,7 @@ public protocol ProjectivePoint<F>:
     associatedtype F: FiniteField
     
     /// Intended for internal use, used to increase performance.
-    var __storageForPrecomputes: [Int: [Self]] { get set }
+    var __storageForPrecomputes: StorageOfPrecomputedProjectivePoints<Self> { get }
     
     /// Checks if this point is indeed on the curve.
     func isOnCurve() -> Bool
@@ -278,16 +287,16 @@ public extension ProjectivePoint {
 public extension ProjectivePoint {
     
     mutating func calcMultiplyPrecomputes(w: Int) throws {
-        guard __storageForPrecomputes[w] == nil else {
+        guard __storageForPrecomputes.pointsDictionary[w] == nil else {
             throw ProjectivePointError.internalErrorPointAlreadyHasPrecomputes
         }
-        __storageForPrecomputes[w] = try Self.normalizeZ(
+        __storageForPrecomputes.pointsDictionary[w] = try Self.normalizeZ(
             points: precompute(window: w)
         )
     }
     
     mutating func clearMultiplyPrecomputes() {
-        __storageForPrecomputes = [:]
+        __storageForPrecomputes.pointsDictionary = [:]
     }
     
     // Constant time multiplication. Uses wNAF.
@@ -303,8 +312,8 @@ private extension ProjectivePoint {
         var n = n
         let W: Int
         let precomputes: [Self]
-        if let pre = __storageForPrecomputes.first {
-            precondition(__storageForPrecomputes.count == 1, "Cyon: unsure about translation from Noble-Bls12-381, it looks like it only supports one key value?")
+        if let pre = __storageForPrecomputes.pointsDictionary.first {
+            precondition(__storageForPrecomputes.pointsDictionary.count == 1, "Cyon: unsure about translation from Noble-Bls12-381, it looks like it only supports one key value?")
             W = pre.key
             precomputes = pre.value
         } else {
@@ -384,10 +393,19 @@ private extension ProjectivePoint {
 }
 
 // MARK: Error
-public enum ProjectivePointError: String, Swift.Error, Equatable {
+public enum ProjectivePointError: Swift.Error, Equatable {
     case failedToConvertToAffinePointInverted_Z_cannotBeZero
     case invalidScalarMustBeLargerThanZero
     case invalidScalarMustNotBeLargerThanOrder
     
     case internalErrorPointAlreadyHasPrecomputes
+    
+    case invalidByteCount(
+        expectedCompressed: Int = BLS.publicKeyCompressedByteCount,
+        orUncompressed: Int = BLS.publicKeyCompressedByteCount * 2,
+        butGot: Int
+    )
+    case invalidCompressedPoint
+    case invalidPointNotOnCurveFp
+    case invalidPointNotOfPrimeOrderSubgroup
 }

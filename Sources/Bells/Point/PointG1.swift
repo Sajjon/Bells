@@ -16,9 +16,7 @@ import RealModule
 /// We add `z` because we work with projective coordinates instead of affine `x-y`,
 /// which results in faster performance.
 public struct PointG1: ProjectivePoint, Equatable {
-  
-    public var __storageForPrecomputes: [Int: [Self]] = [:]
-    
+    public let __storageForPrecomputes: StorageOfPrecomputedProjectivePoints<Self> = .init()
     public let x: Fp
     public let y: Fp
     public let z: Fp
@@ -33,7 +31,47 @@ public struct PointG1: ProjectivePoint, Equatable {
 // MARK: Init
 public extension PointG1 {
     init(bytes: some ContiguousBytes) throws {
-        self = try Self._from(bytes: bytes)
+        let tuple = try bytes.withUnsafeBytes { (bytesPointer) throws -> (x: Fp, y: Fp) in
+            
+            if bytesPointer.count == BLS.publicKeyCompressedByteCount {
+                let P = Curve.P
+                let compressedValue = BigInt(bytesPointer)
+                
+                let bflag = mod(a: compressedValue, b: BLS.exp2_383) / BLS.exp2_382
+                if (bflag == 1) {
+                    let zero = Self.zero
+                    return (x: zero.x, y: zero.y)
+                }
+                let x = Fp(value: mod(a: compressedValue, b: BLS.exp2_381))
+                let ySquared = try x.pow(n: 3) + Self.b
+                guard var y = ySquared.sqrt() else {
+                    throw Error.invalidCompressedPoint
+                }
+                
+                let aflag = mod(a: compressedValue, b: BLS.exp2_382) / BLS.exp2_381
+                
+                if ((y.value * 2) / P) != aflag {
+                    y.negate()
+                    
+                }
+                return (x: x, y: y)
+            } else if bytesPointer.count == 2*BLS.publicKeyCompressedByteCount {
+                // Check if the infinity flag is set
+                guard (bytesPointer[0] & (1 << 6)) == 0 else {
+                    let zero = Self.zero
+                    return (x: zero.x, y: zero.y)
+                }
+                
+                let x = BigInt(Data(bytesPointer.prefix(BLS.publicKeyCompressedByteCount)))
+                let y = BigInt(Data(bytesPointer.suffix(BLS.publicKeyCompressedByteCount)))
+                return (x: Fp(value: x), y: Fp(value: y))
+            } else {
+                throw Error.invalidByteCount(butGot: bytesPointer.count)
+            }
+        }
+        
+        self.init(x: tuple.x, y: tuple.y)
+        try assertValidity()
     }
 }
 
@@ -67,9 +105,8 @@ public extension PointG1 {
     }
     
     // Sparse multiplication against precomputed coefficients
-     func millerLoop(pointG2: PointG2) -> Fp12 {
-//       return millerLoop(P.pairingPrecomputes(), this.toAffine())
-         fatalError()
+     func millerLoop(pointG2 P: PointG2) throws -> Fp12 {
+         try BLS.millerLoop(ell: P.pairingPrecomputes(), g1: self.toAffine())
      }
 
     // Clear cofactor of G1
@@ -145,46 +182,6 @@ private extension PointG1 {
         )
     }
     
-    // MARK: Data De-serialization
-    static func _from(bytes: some ContiguousBytes) throws -> Self {
-        let point = try bytes.withUnsafeBytes { (bytesPointer) throws -> Self in
-            
-            if bytesPointer.count == BLS.publicKeyCompressedByteCount {
-                let P = Curve.P
-                let compressedValue = BigInt(bytesPointer)
-                
-                let bflag = mod(a: compressedValue, b: BLS.exp2_383) / BLS.exp2_382
-                if (bflag == 1) {
-                    return Self.zero
-                }
-                let x = Fp(value: mod(a: compressedValue, b: BLS.exp2_381))
-                let ySquared = try x.pow(n: 3) + Self.b
-                guard var y = ySquared.sqrt() else {
-                    throw Error.invalidCompressedPoint
-                }
-                
-                let aflag = mod(a: compressedValue, b: BLS.exp2_382) / BLS.exp2_381
-                
-                if ((y.value * 2) / P) != aflag {
-                    y.negate()
-                    
-                }
-                return PointG1(x: x, y: y)
-            } else if bytesPointer.count == 2*BLS.publicKeyCompressedByteCount {
-                // Check if the infinity flag is set
-                guard (bytesPointer[0] & (1 << 6)) == 0 else { return .zero }
-                
-                let x = BigInt(Data(bytesPointer.prefix(BLS.publicKeyCompressedByteCount)))
-                let y = BigInt(Data(bytesPointer.suffix(BLS.publicKeyCompressedByteCount)))
-                return PointG1(x: Fp(value: x), y: Fp(value: y))
-            } else {
-                throw Error.invalidByteCount(butGot: bytesPointer.count)
-            }
-        }
-        return try point.assertValidity()
-    }
-    
-    
     /// Checks is the point resides in prime-order subgroup.
     func isTorsionFree() -> Bool {
         do {
@@ -236,14 +233,5 @@ private extension PointG1 {
 }
 
 extension PointG1 {
-    enum Error: Swift.Error {
-        case invalidByteCount(
-            expectedCompressed: Int = BLS.publicKeyCompressedByteCount,
-            orUncompressed: Int = BLS.publicKeyCompressedByteCount * 2,
-            butGot: Int
-        )
-        case invalidCompressedPoint
-        case invalidPointNotOnCurveFp
-        case invalidPointNotOfPrimeOrderSubgroup
-    }
+    typealias Error = ProjectivePointError
 }

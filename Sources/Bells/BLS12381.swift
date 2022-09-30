@@ -246,7 +246,7 @@ internal extension BLS {
         return ellCoefficients
     }
     
-    static func millerLoop(ell: [ProjectivePointFp2], g1: (x: Fp, y: Fp)) -> Fp12 {
+    static func millerLoop(ell: [ProjectivePointFp2], g1: AffinePoint<Fp>) -> Fp12 {
         let Px = g1.x.value
         let Py = g1.y.value
         var f12 = Fp12.one
@@ -461,8 +461,6 @@ internal extension BLS {
         return .init(x: numerator, y: y, z: denominator)
     }
 
-    
-    
     static func hashToField(
         message: Data,
         elementCount: Int,
@@ -491,7 +489,19 @@ internal extension BLS {
         }
         return u
     }
+    
+    // Calculates bilinear pairing
+    static func pairing(P: PointG1, Q: PointG2, withFinalExponent: Bool = true) throws -> Fp12 {
+        guard !P.isZero, !Q.isZero else {
+            throw NoPairingExistsAtPointOfInfinity()
+        }
+        try P.assertValidity()
+        try Q.assertValidity()
+        let looped = try P.millerLoop(pointG2: Q)
+        return try withFinalExponent ? looped.finalExponentiate() : looped
+    }
 }
+struct NoPairingExistsAtPointOfInfinity: Error {}
 
 /// Octet Stream to Integer
 ///
@@ -534,7 +544,6 @@ public struct DomainSeperationTag: Equatable, ExpressibleByStringLiteral {
             }
         }
     }
-//    public var count: Int { _data.count }
     public init(data: Data) {
         precondition(data.count > 0)
         precondition(data.count <= 2048)

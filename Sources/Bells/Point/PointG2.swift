@@ -7,8 +7,19 @@
 
 import Foundation
 
+
+
 public struct PointG2: ProjectivePoint {
-    public var __storageForPrecomputes: [Int : [PointG2]] = [:]
+    
+    private final class StorageOfPrecomputedSimplePoints {
+        fileprivate var points: [SimpleProjectivePoint<Fp2>]?
+        fileprivate init(points: [SimpleProjectivePoint<Fp2>]? = nil) {
+            self.points = points
+        }
+    }
+    
+    public let __storageForPrecomputes: StorageOfPrecomputedProjectivePoints<Self> = .init()
+    private let simpleStorageOfPrecomputedPoints: StorageOfPrecomputedSimplePoints = .init()
     public let x: Fp2
     public let y: Fp2
     public let z: Fp2
@@ -72,15 +83,65 @@ public extension PointG2 {
         return P
     }
     
-    /// Checks that equation is fulfilled: `y² = x³ + b`
+    /// Checks for equation `y² = x³ + b`
     func isOnCurve() -> Bool {
-        fatalError()
+        do {
+            return try _isOnCurve()
+        } catch {
+            return false
+        }
+    }
+    
+    /// Checks for equation `y² = x³ + b`
+    func _isOnCurve() throws -> Bool {
+        let b = Fp2(Curve.b2)
+        let left = try y.pow(n: 2) * z - x.pow(n: 3)
+        let right = try b * z.pow(n: 3)
+        return (left - right).isZero
     }
     
     func mulCurveX() throws -> Self {
         try unsafeMultiply(scalar: Curve.x).negated()
     }
     
+    @discardableResult
+    func assertValidity() throws -> Self {
+        if isZero { return self }
+        guard isOnCurve() else {
+            throw Error.invalidPointNotOnCurveFp
+        }
+        guard isTorsionFree() else {
+            throw Error.invalidPointNotOfPrimeOrderSubgroup
+        }
+        // all good
+        return self
+    }
+    
+    /// Checks is the point resides in prime-order subgroup.
+    func isTorsionFree() -> Bool {
+        do {
+            return try _isTorsionFree()
+        } catch {
+            return false
+        }
+    }
+    
+    // Checks is the point resides in prime-order subgroup.
+    // point.isTorsionFree() should return true for valid points
+    // It returns false for shitty points.
+    // https://eprint.iacr.org/2021/1130.pdf
+    // prettier-ignore
+    func _isTorsionFree() throws -> Bool {
+      let P = self
+      return try P.mulCurveX() == P.psi() // ψ(P) == [u](P)
+      // https://eprint.iacr.org/2019/814.pdf
+      // const psi2 = P.psi2();                        // Ψ²(P)
+      // const psi3 = psi2.psi();                      // Ψ³(P)
+      // const zPsi3 = psi3.mulNegX();                 // [z]Ψ³(P) where z = -x
+      // return zPsi3.subtract(psi2).add(P).isZero();  // [z]Ψ³(P) - Ψ²(P) + P == O
+    }
+    
+    typealias Error = ProjectivePointError
     
     // Ψ endomorphism
     private func psi() throws -> Self {
@@ -108,6 +169,17 @@ public extension PointG2 {
         t3 = t3 - t1     // Ψ²(2P) - Ψ(P) + [x²]P - [x]Ψ(P) + [x]P
         let Q = t3 - P // Ψ²(2P) - Ψ(P) + [x²]P - [x]Ψ(P) + [x]P - 1P =>
         return Q                 // [x²-x-1]P + [x-1]Ψ(P) + Ψ²(2P)
+    }
+    
+    func pairingPrecomputes() throws -> [SimpleProjectivePoint<Fp2>] {
+        if let precomputes = self.simpleStorageOfPrecomputedPoints.points {
+            return precomputes
+        }
+        let affine = try toAffine()
+        let precomputes = try BLS.calcPairingPrecomputes(x: affine.x, y: affine.y)
+        
+        self.simpleStorageOfPrecomputedPoints.points = precomputes
+        return precomputes
     }
 }
 

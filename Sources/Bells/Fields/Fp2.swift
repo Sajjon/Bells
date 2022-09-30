@@ -32,6 +32,9 @@ public extension Fp2 {
     init(_ tuple: (BigInt, BigInt)) {
         self.init(c0: tuple.0, c1: tuple.1)
     }
+    init(_ tuple: (Int, Int)) {
+        self.init(c0: BigInt(tuple.0), c1: BigInt(tuple.1))
+    }
     init(_ tuple: (Fp, Fp)) {
         self.init(c0: tuple.0, c1: tuple.1)
     }
