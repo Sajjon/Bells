@@ -199,7 +199,7 @@ internal extension BLS {
         
         
         for bitX in BitArray(bitPattern: Curve.x)
-            .prefix(Curve.x.bitWidthIgnoreSign - 2)
+            .prefix(Curve.x.bitWidthIgnoreSign-1)
             .reversed() {
             // Double
             let t0 = Ry.squared() // Ry²
@@ -223,20 +223,23 @@ internal extension BLS {
             if bitX {
                 // Addition
                 let t0 = Ry - (Qy * Rz)
-                let t1 = Rx - Qx * Rz
-                
+                let t1 = Rx - (Qx * Rz)
+                let ecX = (t0 * Qx) - (t1 * Qy)
+                let ecY = t0.negated()
+                let ecZ = t1
+
                 ellCoefficients.append(
                     ProjectivePointFp2(
-                        x: (t0 * Qx) - (t1 * Qy),
-                        y: t0.negated(),
-                        z: t1
+                        x: ecX,
+                        y: ecY,
+                        z: ecZ
                     )
                 )
                 
                 let t2 = t1.squared() // T1²
                 let t3 = t2 * t1
                 let t4 = t2 * Rx
-                let t5 = t3 - (4 * t4) + (t0.squared() * Rz)
+                let t5 = t3 - (2 * t4) + (t0.squared() * Rz)
                 Rx = t1 * t5
                 Ry = ((t4 - t5) * t0) - (t3 * Ry)
                 Rz = Rz * t3
@@ -253,9 +256,9 @@ internal extension BLS {
         var j = 0
 
         for (i, bitX) in BitArray(bitPattern: Curve.x)
-            .prefix(Curve.x.bitWidthIgnoreSign - 2)
-            .reversed()
+            .prefix(Curve.x.bitWidthIgnoreSign-1)
             .enumerated()
+            .reversed()
         {
             defer { j += 1 }
             let E = ell[j]

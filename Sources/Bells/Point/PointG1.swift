@@ -106,7 +106,9 @@ public extension PointG1 {
     
     // Sparse multiplication against precomputed coefficients
      func millerLoop(pointG2 P: PointG2) throws -> Fp12 {
-         try BLS.millerLoop(ell: P.pairingPrecomputes(), g1: self.toAffine())
+         let ell = try P.pairingPrecomputes()
+         let g1 = try self.toAffine()
+         return BLS.millerLoop(ell: ell, g1: g1)
      }
 
     // Clear cofactor of G1
