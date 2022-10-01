@@ -7,22 +7,15 @@
 
 import Foundation
 
-
-
 public struct PointG2: ProjectivePoint {
-    
-    private final class StorageOfPrecomputedSimplePoints {
-        fileprivate var points: [SimpleProjectivePoint<Fp2>]?
-        fileprivate init(points: [SimpleProjectivePoint<Fp2>]? = nil) {
-            self.points = points
-        }
-    }
-    
-    public let __storageForPrecomputes: StorageOfPrecomputedProjectivePoints<Self> = .init()
-    private let simpleStorageOfPrecomputedPoints: StorageOfPrecomputedSimplePoints = .init()
+   
     public let x: Fp2
     public let y: Fp2
     public let z: Fp2
+    
+    public let __storageForPrecomputes: StorageOfPrecomputedProjectivePoints<Self> = .init()
+    private let simpleStorageOfPrecomputedPoints: StorageOfPrecomputedSimplePoints = .init()
+    
     public init(x: Fp2, y: Fp2, z: Fp2 = .one) {
         self.x = x
         self.y = y
@@ -191,5 +184,15 @@ public extension PointG2 {
     // MARK: Data Serialization
     func toData(compress: Bool = false) -> Data {
         fatalError()
+    }
+}
+
+extension PointG2 {
+    
+    private final class StorageOfPrecomputedSimplePoints {
+        fileprivate var points: [SimpleProjectivePoint<Fp2>]?
+        fileprivate init(points: [SimpleProjectivePoint<Fp2>]? = nil) {
+            self.points = points
+        }
     }
 }

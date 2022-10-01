@@ -31,9 +31,10 @@ public protocol ProjectivePoint<F>:
     ThrowingMultipliableByScalarArtithmetic,
     AdditiveArithmetic,
     Equatable
-{
+where Affine == AffinePoint<F> {
     /// The finite field of which x, y, z are all elements.
     associatedtype F: FiniteField
+    associatedtype Affine
     
     /// Intended for internal use, used to increase performance.
     var __storageForPrecomputes: StorageOfPrecomputedProjectivePoints<Self> { get }
@@ -54,7 +55,7 @@ public protocol ProjectivePoint<F>:
     init(x: F, y: F, z: F)
     
     /// Converts an affine point into this projective point.
-    init(affine: AffinePoint<F>)
+    init(affine: Affine)
    
     /// Deserialize a point from data (bytes).
     init(bytes: some ContiguousBytes) throws
@@ -170,12 +171,12 @@ public extension ProjectivePoint {
     
     /// Converts Projective point to default (x, y) coordinates.
     /// Can accept precomputed Z^-1 - for example, from invertBatch.
-    func toAffine(invertedZ: F? = nil) throws -> AffinePoint<F> {
+    func toAffine(invertedZ: F? = nil) throws -> Affine {
         let invZ = try invertedZ ?? z.inverted()
         guard !invZ.isZero else {
             throw ProjectivePointError.failedToConvertToAffinePointInverted_Z_cannotBeZero
         }
-        return AffinePoint(x: x * invZ, y: y * invZ)
+        return Affine(x: x * invZ, y: y * invZ)
     }
     
     static func toAffineBatch(points: [some ProjectivePoint<F>]) throws -> [AffinePoint<F>] {
