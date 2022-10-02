@@ -14,11 +14,12 @@ extension BigInt {
         padToLength: Int? = nil,
         with pad: UInt8 = 0x00
     ) -> Data {
-        let data = serialize()
+        // Have to use `magnitude` otherwise the sign is encoded which results in wrong byte array.
+        let data = magnitude.serialize()
         guard let padToLength, padToLength > data.count else { return data }
-        return data + Data([UInt8](
+        return Data([UInt8](
             repeating: pad,
             count: padToLength - data.count
-        ))
+        )) + data
     }
 }

@@ -101,6 +101,7 @@ public extension BLS {
     static let exp2_383 = exp2_382 * 2
     
     static let publicKeyCompressedByteCount = 48
+    static let publicKeyUncompressedByteCount = publicKeyCompressedByteCount * 2
 }
 
 

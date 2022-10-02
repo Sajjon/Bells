@@ -16,62 +16,77 @@ import RealModule
 /// We add `z` because we work with projective coordinates instead of affine `x-y`,
 /// which results in faster performance.
 public struct PointG1: ProjectivePoint, Equatable {
-    public let __storageForPrecomputes: StorageOfPrecomputedProjectivePoints<Self> = .init()
+    public let __storageForPrecomputes: StorageOfPrecomputedProjectivePoints<Self>
     public let x: Fp
     public let y: Fp
     public let z: Fp
     
-    public init(x: Fp, y: Fp, z: Fp = .one) {
+    public init(x: Fp, y: Fp, z: Fp = Self.zDefault) {
         self.x = x
         self.y = y
         self.z = z
+        self.__storageForPrecomputes = .init()
     }
 }
 
 // MARK: Init
 public extension PointG1 {
-    init(bytes: some ContiguousBytes) throws {
-        let tuple = try bytes.withUnsafeBytes { (bytesPointer) throws -> (x: Fp, y: Fp) in
-            
-            if bytesPointer.count == BLS.publicKeyCompressedByteCount {
-                let P = Curve.P
-                let compressedValue = BigInt(bytesPointer)
-                
-                let bflag = mod(a: compressedValue, b: BLS.exp2_383) / BLS.exp2_382
-                if (bflag == 1) {
-                    let zero = Self.zero
-                    return (x: zero.x, y: zero.y)
-                }
-                let x = Fp(value: mod(a: compressedValue, b: BLS.exp2_381))
-                let ySquared = try x.pow(n: 3) + Self.b
-                guard var y = ySquared.sqrt() else {
-                    throw Error.invalidCompressedPoint
-                }
-                
-                let aflag = mod(a: compressedValue, b: BLS.exp2_382) / BLS.exp2_381
-                
-                if ((y.value * 2) / P) != aflag {
-                    y.negate()
-                    
-                }
-                return (x: x, y: y)
-            } else if bytesPointer.count == 2*BLS.publicKeyCompressedByteCount {
-                // Check if the infinity flag is set
-                guard (bytesPointer[0] & (1 << 6)) == 0 else {
-                    let zero = Self.zero
-                    return (x: zero.x, y: zero.y)
-                }
-                
-                let x = BigInt(Data(bytesPointer.prefix(BLS.publicKeyCompressedByteCount)))
-                let y = BigInt(Data(bytesPointer.suffix(BLS.publicKeyCompressedByteCount)))
-                return (x: Fp(value: x), y: Fp(value: y))
-            } else {
-                throw Error.invalidByteCount(butGot: bytesPointer.count)
-            }
+    static let zDefault = Fp.one
+    
+    init(compressedData: Data) throws {
+        guard compressedData.count == BLS.publicKeyCompressedByteCount else {
+            throw Error.invalidByteCount(butGot: compressedData.count)
         }
         
-        self.init(x: tuple.x, y: tuple.y)
+        let P = Curve.P
+        let compressedValue = os2ip(compressedData)
+        
+        let bflag = mod(a: compressedValue, b: BLS.exp2_383) / BLS.exp2_382
+        
+        if (bflag == 1) {
+            self = Self.zero
+        } else {
+            let x = Fp(value: mod(a: compressedValue, b: BLS.exp2_381))
+            let ySquared = try x.pow(n: 3) + Self.b
+            guard var y = ySquared.sqrt() else {
+                throw Error.invalidCompressedPoint
+            }
+            
+            let aflag = mod(a: compressedValue, b: BLS.exp2_382) / BLS.exp2_381
+            
+            if ((y.value * 2) / P) != aflag {
+                y.negate()
+            }
+            
+            self.init(x: x, y: y)
+        }
         try assertValidity()
+    }
+    
+    init(uncompressedData: Data) throws {
+        guard uncompressedData.count == BLS.publicKeyUncompressedByteCount else {
+            throw Error.invalidByteCount(butGot: uncompressedData.count)
+        }
+        
+        // Check if the infinity flag is set
+        if (uncompressedData[0] & (1 << 6)) != 0 {
+            self = .zero
+        } else {
+            let x = os2ip(Data(uncompressedData.prefix(BLS.publicKeyCompressedByteCount)))
+            let y = os2ip(Data(uncompressedData.suffix(BLS.publicKeyCompressedByteCount)))
+            self.init(x: .init(value: x), y: .init(value: y))
+        }
+        try assertValidity()
+    }
+    
+    init(bytes: some ContiguousBytes) throws {
+        let data = bytes.withUnsafeBytes { Data($0) }
+        if data.count == BLS.publicKeyCompressedByteCount {
+            try self.init(compressedData: data)
+        } else {
+            try self.init(uncompressedData: data)
+        }
+      
     }
 }
 
@@ -93,7 +108,9 @@ public extension PointG1 {
 public extension PointG1 {
     @discardableResult
     func assertValidity() throws -> Self {
-        if isZero { return self }
+        if isZero {
+            return self
+        }
         guard isOnCurve() else {
             throw Error.invalidPointNotOnCurveFp
         }
@@ -144,13 +161,13 @@ public extension PointG1 {
                 let x = affine.x
                 let y = affine.y
                 let flag = (y.value * 2) / P
-                out = x.value + flag * BLS.exp2_381 + BLS.exp2_383
+                out = x.value + (flag * BLS.exp2_381) + BLS.exp2_383
             }
             return out.serialize(padToLength: BLS.publicKeyCompressedByteCount)
         } else {
             if isZero {
                 var out = Data(repeating: 0x00, count: 2 * BLS.publicKeyCompressedByteCount)
-                out[0] = 0x04
+                out[0] = 0x40
                 return out
             } else {
                 let affine = try! self.toAffine()

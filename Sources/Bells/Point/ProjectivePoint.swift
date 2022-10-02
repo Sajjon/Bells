@@ -144,6 +144,12 @@ public extension ProjectivePoint {
         )
     }
     
+    static var identity: Self {
+        .init(
+            x: .zero, y: .one, z: .zero
+        )
+    }
+    
     static func == (lhs: Self, rhs: some ProjectivePoint<F>) -> Bool {
         lhs.isEqual(to: rhs)
     }
@@ -394,7 +400,7 @@ private extension ProjectivePoint {
 }
 
 // MARK: Error
-public enum ProjectivePointError: Swift.Error, Equatable {
+public enum ProjectivePointError: Swift.Error, Equatable, CustomStringConvertible {
     case failedToConvertToAffinePointInverted_Z_cannotBeZero
     case invalidScalarMustBeLargerThanZero
     case invalidScalarMustNotBeLargerThanOrder
@@ -409,4 +415,19 @@ public enum ProjectivePointError: Swift.Error, Equatable {
     case invalidCompressedPoint
     case invalidPointNotOnCurveFp
     case invalidPointNotOfPrimeOrderSubgroup
+}
+
+public extension ProjectivePointError {
+    var description: String {
+        switch self {
+        case .failedToConvertToAffinePointInverted_Z_cannotBeZero: return "failedToConvertToAffinePointInverted_Z_cannotBeZero"
+        case .invalidScalarMustBeLargerThanZero: return "invalidScalarMustBeLargerThanZero"
+        case .invalidScalarMustNotBeLargerThanOrder: return "invalidScalarMustNotBeLargerThanOrder"
+        case .internalErrorPointAlreadyHasPrecomputes: return "internalErrorPointAlreadyHasPrecomputes"
+        case .invalidByteCount: return "invalidByteCount"
+        case .invalidCompressedPoint: return "invalidCompressedPoint"
+        case .invalidPointNotOnCurveFp: return "invalidPointNotOnCurveFp"
+        case .invalidPointNotOfPrimeOrderSubgroup: return "invalidPointNotOfPrimeOrderSubgroup"
+        }
+    }
 }

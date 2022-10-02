@@ -83,12 +83,10 @@ private extension XCTestCase {
             file: file,
             line: line
         )
-        print("✅fileURL: \(fileURL)")
         let data: Data
         
         do {
             data = try Data(contentsOf: fileURL)
-            print("✅data: \(data.count)")
         } catch {
             XCTFail("Expected to find data at: `\(fileURL.absoluteString)`, but none found, error: \(String(describing: error))")
             return
