@@ -13,3 +13,7 @@ public protocol FiniteField: Field {
     static var order: BigInt { get }
     static var maxBits: Int { get }
 }
+public extension FiniteField {
+    var order: BigInt { Self.order }
+    static var maxBits: Int { Self.order.bitWidthIgnoreSign }
+}

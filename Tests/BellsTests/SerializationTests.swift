@@ -78,9 +78,9 @@ final class SerializationTests: XCTestCase {
         
         try await elementOnCurveTest(
             name: "g1_uncompressed_valid_test_vectors",
-            projectiveType: P1.self,
+            groupType: G1.self,
             serialize: { $0.toData(compress: false) },
-            deserialize: P1.init(bytes:)
+            deserialize: G1.init(bytes:)
         )
     }
     
@@ -88,9 +88,9 @@ final class SerializationTests: XCTestCase {
         
         try await elementOnCurveTest(
             name: "g1_compressed_valid_test_vectors",
-            projectiveType: P1.self,
+            groupType: G1.self,
             serialize: { $0.toData(compress: true) },
-            deserialize: P1.init(bytes:)
+            deserialize: G1.init(bytes:)
         )
     }
 }
@@ -98,35 +98,27 @@ final class SerializationTests: XCTestCase {
 extension SerializationTests {
     
     @MainActor
-    func elementOnCurveTest<Projective>(
+    func elementOnCurveTest<G>(
         name: String,
-        projectiveType: Projective.Type,
-        serialize: @escaping (Projective) throws -> Data,
-        deserialize: @escaping (Data) throws -> Projective,
+        groupType: G.Type,
+        serialize: @escaping (G) throws -> Data,
+        deserialize: @escaping (Data) throws -> G,
         line: UInt = #line
-    ) async throws where Projective: ProjectivePoint, Projective.Affine: Equatable {
+    ) async throws where G: FiniteGroup {
         try await doTestDATFixture(name: name, line: line) { suiteData in
-            var e = Projective.identity
+            var e = G.identity
             var bytesLeftToParse = suiteData
             for _ in 0..<1000 {
-                defer { e += .generator }
+                
                 let serializedBytes = try serialize(e)
                 let byteCount = serializedBytes.count
                 
                 let bytesToDeserialize = bytesLeftToParse.removingFirst(byteCount)
-                do {
-                    
                 let pointDeserialized = try deserialize(bytesToDeserialize)
 
-                if serializedBytes != bytesToDeserialize {
-                    fatalError("serializedBytes: \(serializedBytes.hex()) != bytesToDeserialize: \(bytesToDeserialize.hex())")
-                }
-//                XCTAssertEqual(serializedBytes, bytesToDeserialize)
+                XCTAssertEqual(serializedBytes, bytesToDeserialize)
                 XCTAssertEqual(e, pointDeserialized)
-                } catch {
-                    print("derialization error: \(error), bytesToDeserialize: \(bytesToDeserialize.hex()), serializedBytes: \(serializedBytes.hex())")
-                    print("\n")
-                }
+                try e += G.generator
             }
             XCTAssertEqual(bytesLeftToParse.count, 0, line: line)
         }

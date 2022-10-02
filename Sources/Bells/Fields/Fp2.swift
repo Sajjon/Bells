@@ -67,8 +67,8 @@ public extension Fp2 {
 }
 
 public extension Fp2 {
-    static let order = Curve.P2
-    static let maxBits = Self.order.bitWidthIgnoreSign
+    /// The order of this field equals the modulus of G2.
+    static let order = G2.Curve.modulus
     static let zero = Self(c0: .zero, c1: .zero)
     static let one = Self(c0: .one, c1: .zero)
     

@@ -48,6 +48,35 @@ public protocol SignedNumeric_ {
     mutating func negate()
 }
 
+/// A throwing version of  version of `Numeric` without `ExpressibleByIntegerLiteral`  or `Magnitude` requirement.
+public protocol ThrowingSignedNumeric {
+    
+    /// Returns the additive inverse of the self.
+    func negated() throws -> Self
+    
+    /// Returns the additive inverse of the specified value.
+    ///
+    /// Default implementation provided.
+    static prefix func - (operand: Self) throws -> Self
+ 
+    /// Replaces this value with its additive inverse.
+    ///
+    /// Default implementation provided.
+    mutating func negate() throws
+}
+public extension ThrowingSignedNumeric {
+    
+    /// Returns the additive inverse of the specified value.
+    static prefix func - (operand: Self) throws -> Self {
+        try operand.negated()
+    }
+    
+    /// Replaces this value with its additive inverse.
+    mutating func negate() throws {
+        self = try negated()
+    }
+}
+
 extension AdditiveArithmetic where Self: SignedNumeric_ {
     public static func - (lhs: Self, rhs: Self) -> Self {
         lhs + rhs.negated()
@@ -171,5 +200,27 @@ public extension ThrowingMultipliableByScalarArtithmetic {
   
     static func * (lhs: Self, rhs: Int) throws -> Self {
         try lhs * BigInt(rhs)
+    }
+}
+
+public protocol ThrowingAdditiveArtithmetic {
+    /// Adds two values and produces their sum.
+    static func + (lhs: Self, rhs: Self) throws -> Self
+ 
+    /// Adds two values and stores the result in the left-hand-side variable.
+    ///
+    /// Default implementation provided.
+    static func += (lhs: inout Self, rhs: Self) throws
+}
+public extension ThrowingAdditiveArtithmetic {
+    /// Adds two values and stores the result in the left-hand-side variable.
+    static func += (lhs: inout Self, rhs: Self) throws {
+        lhs = try lhs + rhs
+    }
+}
+
+extension ThrowingAdditiveArtithmetic where Self: ThrowingSignedNumeric {
+    public static func - (lhs: Self, rhs: Self) throws -> Self {
+        try lhs + rhs.negated()
     }
 }

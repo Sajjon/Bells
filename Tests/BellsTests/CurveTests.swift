@@ -13,7 +13,7 @@ final class CurveTests: XCTestCase {
     
     /// This test will probably fail if run on a 32 bit OS, but who runs 32 bit nowadays?
     func test_expected_words_of_P() {
-        let uint64Modulos = Curve.P.words
+        let uint64Modulos = G1.Curve.P.words
         let fail = "This test probably failed since you are running it on a non 64-bit OS, e.g. 32 bit OS. Please raise an issue on Github (github.com/sajjon/Bells)"
         XCTAssertEqual(uint64Modulos[0], 0xb9fe_ffff_ffff_aaab, fail)
         XCTAssertEqual(uint64Modulos[1], 0x1eab_fffe_b153_ffff, fail)

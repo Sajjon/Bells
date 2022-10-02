@@ -184,7 +184,7 @@ public extension Fp12 {
 
     internal func cyclotomicExp(n: BigInt) -> Self {
         return BitArray(bitPattern: n)
-            .prefix(Curve.x.bitWidthIgnoreSign)
+            .prefix(G2.Curve.x.bitWidthIgnoreSign)
             .reversed()
             .reduce(into: Self.one) {
                 $0 = $0.cyclotomicSquare()
@@ -197,7 +197,7 @@ public extension Fp12 {
     // https://eprint.iacr.org/2010/354.pdf
     // https://eprint.iacr.org/2009/565.pdf
     func finalExponentiate() throws -> Self {
-        let x = Curve.x
+        let x = G2.Curve.x
         // this^(q⁶) / this
         let t0 = try frobeniusMap(power: 6) / self
         // t0^(q²) * t0

@@ -6,8 +6,9 @@
 //
 
 import Foundation
+import BytePattern
 
-public struct PointG2: ProjectivePoint {
+public struct P2: ProjectivePoint {
    
     public let x: Fp2
     public let y: Fp2
@@ -23,7 +24,7 @@ public struct PointG2: ProjectivePoint {
     }
 }
 
-public extension PointG2 {
+public extension P2 {
 
     init(privateKey: PrivateKey) {
         fatalError()
@@ -32,27 +33,26 @@ public extension PointG2 {
     init(bytes: some ContiguousBytes) throws {
         fatalError()
     }
+    init(uncompressedData: Data) throws {
+        fatalError()
+    }
+    init(compressedData: Data) throws {
+        fatalError()
+    }
     
     init(signature: Signature) throws {
         fatalError()
     }
 }
 
-public extension PointG2 {
+public extension P2 {
     typealias F = Fp2
-    
-    static let generator = Self(
-        x: Fp2(Curve.G2x),
-        y: Fp2(Curve.G2y),
-        z: Fp2.one
-    )
-    
     static let zero = Self(x: .one, y: .one, z: .zero)
 }
 
-import BytePattern
+
 public typealias Message = Data
-public extension PointG2 {
+public extension P2 {
     
     /// Encodes byte string to elliptic curve
       /// https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-hash-to-curve-11#section-3
@@ -87,14 +87,14 @@ public extension PointG2 {
     
     /// Checks for equation `y² = x³ + b`
     func _isOnCurve() throws -> Bool {
-        let b = Fp2(Curve.b2)
+        let b = Fp2(G2.Curve.b)
         let left = try y.pow(n: 2) * z - x.pow(n: 3)
         let right = try b * z.pow(n: 3)
         return (left - right).isZero
     }
     
     func mulCurveX() throws -> Self {
-        try unsafeMultiply(scalar: Curve.x).negated()
+        try unsafeMultiply(scalar: G2.Curve.x).negated()
     }
     
     @discardableResult
@@ -176,7 +176,7 @@ public extension PointG2 {
     }
 }
 
-public extension PointG2 {
+public extension P2 {
     func toSignature() -> Signature {
         fatalError()
     }
@@ -187,7 +187,7 @@ public extension PointG2 {
     }
 }
 
-extension PointG2 {
+extension P2 {
     
     private final class StorageOfPrecomputedSimplePoints {
         fileprivate var points: [SimpleProjectivePoint<Fp2>]?

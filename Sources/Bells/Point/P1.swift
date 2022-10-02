@@ -39,7 +39,6 @@ public extension P1 {
             throw Error.invalidByteCount(butGot: compressedData.count)
         }
         
-        let P = Curve.P
         let compressedValue = os2ip(compressedData)
         
         let bflag = mod(a: compressedValue, b: BLS.exp2_383) / BLS.exp2_382
@@ -55,7 +54,7 @@ public extension P1 {
             
             let aflag = mod(a: compressedValue, b: BLS.exp2_382) / BLS.exp2_381
             
-            if ((y.value * 2) / P) != aflag {
+            if ((y.value * 2) / G1.Curve.P) != aflag {
                 y.negate()
             }
             
@@ -95,14 +94,7 @@ public extension P1 {
 public extension P1 {
     typealias F = Fp
     
-    /// The generator point of a the group `G1`.
-    static let generator = Self(
-        x: Fp(value: Curve.Gx),
-        y: Fp(value: Curve.Gy),
-        z: Fp.one
-    )
-    
-    static let b = Fp(value: Curve.b)
+    static let b = Fp(value: G1.Curve.b)
 }
 
 // MARK: Public
@@ -123,12 +115,12 @@ public extension P1 {
     }
     
     // Sparse multiplication against precomputed coefficients
-     func millerLoop(pointG2 P: PointG2) throws -> Fp12 {
-         let ell = try P.pairingPrecomputes()
-         let g1 = try self.toAffine()
-         return BLS.millerLoop(ell: ell, g1: g1)
-     }
-
+    func millerLoop(p2: P2) throws -> Fp12 {
+        let ell = try p2.pairingPrecomputes()
+        let g1 = try self.toAffine()
+        return BLS.millerLoop(ell: ell, g1: g1)
+    }
+    
     // Clear cofactor of G1
     // https://eprint.iacr.org/2019/403
     func clearCofactor() throws -> Self {
@@ -154,7 +146,7 @@ public extension P1 {
    
         var out: BigInt
         if compress {
-            let P = Curve.P
+            let P = G1.Curve.P
             if isZero {
                 out = BLS.exp2_383 + BLS.exp2_382
             } else {
@@ -213,12 +205,12 @@ private extension P1 {
     
     // [-0xd201000000010000]P
     func mulCurveX() throws -> Self {
-        try unsafeMultiply(scalar: Curve.x).negated()
+        try unsafeMultiply(scalar: G1.Curve.x).negated()
     }
     
     // [0xd201000000010000]P
     func mulCurveMinusX() throws -> Self {
-        try unsafeMultiply(scalar: Curve.x)
+        try unsafeMultiply(scalar: G1.Curve.x)
     }
     
     // Checks is the point resides in prime-order subgroup.

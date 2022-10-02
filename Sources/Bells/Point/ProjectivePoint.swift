@@ -59,9 +59,9 @@ where Affine == AffinePoint<F> {
    
     /// Deserialize a point from data (bytes).
     init(bytes: some ContiguousBytes) throws
-    
-    /// The generator point of a group this projective point is an element of.
-    static var generator: Self { get }
+    init(uncompressedData: Data) throws
+    init(compressedData: Data) throws
+
     static var zero: Self { get }
     
     /// Checks if this element is the `zero` element.
@@ -141,12 +141,6 @@ public extension ProjectivePoint {
     static var zero: Self {
         .init(
             x: .one, y: .one, z: .zero
-        )
-    }
-    
-    static var identity: Self {
-        .init(
-            x: .zero, y: .one, z: .zero
         )
     }
     
@@ -391,7 +385,7 @@ private extension ProjectivePoint {
         guard scalar > 0 else {
             throw ProjectivePointError.invalidScalarMustBeLargerThanZero
         }
-        guard scalar <= Curve.r else {
+        guard scalar <= G2.Curve.order else {
             throw ProjectivePointError.invalidScalarMustNotBeLargerThanOrder
         }
         // OK!

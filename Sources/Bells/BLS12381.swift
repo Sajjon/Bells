@@ -199,8 +199,8 @@ internal extension BLS {
         var ellCoefficients: [ProjectivePointFp2] = []
         
         
-        for bitX in BitArray(bitPattern: Curve.x)
-            .prefix(Curve.x.bitWidthIgnoreSign-1)
+        for bitX in BitArray(bitPattern: G1.Curve.x)
+            .prefix(G1.Curve.x.bitWidthIgnoreSign-1)
             .reversed() {
             // Double
             let t0 = Ry.squared() // Ry²
@@ -256,8 +256,8 @@ internal extension BLS {
         var f12 = Fp12.one
         var j = 0
 
-        for (i, bitX) in BitArray(bitPattern: Curve.x)
-            .prefix(Curve.x.bitWidthIgnoreSign-1)
+        for (i, bitX) in BitArray(bitPattern: G1.Curve.x)
+            .prefix(G1.Curve.x.bitWidthIgnoreSign-1)
             .enumerated()
             .reversed()
         {
@@ -359,7 +359,7 @@ internal extension BLS {
     }
     
     static let p²Minus9div16: BigInt = {
-        (Curve.P.power(2) - 9) / 16
+        (G1.Curve.P.power(2) - 9) / 16
     }()
     
     // Does not return a square root.
@@ -495,13 +495,15 @@ internal extension BLS {
     }
     
     // Calculates bilinear pairing
-    static func pairing(P: P1, Q: PointG2, withFinalExponent: Bool = true) throws -> Fp12 {
-        guard !P.isZero, !Q.isZero else {
+    static func pairing(
+        g1: G1,
+        g2: G2,
+        withFinalExponent: Bool = true
+    ) throws -> Fp12 {
+        guard !g1.isZero, !g2.isZero else {
             throw NoPairingExistsAtPointOfInfinity()
         }
-        try P.assertValidity()
-        try Q.assertValidity()
-        let looped = try P.millerLoop(pointG2: Q)
+        let looped = try g1.point.millerLoop(p2: g2.point)
         return try withFinalExponent ? looped.finalExponentiate() : looped
     }
 }
@@ -586,7 +588,7 @@ public struct HashToFieldConfig: Equatable {
     
     public init(
         domainSeperationTag: DomainSeperationTag = .g2,
-        p: BigInt = Curve.P,
+        p: BigInt = G1.Curve.P,
         m: Int = 2,
         k: Int = 128,
         expand: Bool = true

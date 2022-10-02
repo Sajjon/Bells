@@ -88,10 +88,10 @@ private extension HashToCurveG1Tests {
                     return Fp2(c0: Fp(value: c0), c1: Fp(value: c1))
                 }
                 
-                func pointG2(from decodableElement: DecodableElement) throws -> PointG2 {
+                func pointG2(from decodableElement: DecodableElement) throws -> P2 {
                     let x = try fp2(\.x, in: decodableElement)
                     let y = try fp2(\.y, in: decodableElement)
-                    return PointG2(x: x, y: y)
+                    return P2(x: x, y: y)
                 }
                 
                 let Q0 = try pointG2(from: vector.Q0)
@@ -105,13 +105,13 @@ private extension HashToCurveG1Tests {
                 fatalError("not supported yet")
             case .hash:
                 return {
-                    try await PointG2.hashToCurve(
+                    try await P2.hashToCurve(
                         message: $0,
                         hashToFieldConfig: .init(domainSeperationTag: $1)
                     )
                 }
             }
-        } operationResultToExpected: { (projective: PointG2) in
+        } operationResultToExpected: { (projective: P2) in
             projective
         }
     }

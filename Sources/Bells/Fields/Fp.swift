@@ -65,9 +65,8 @@ func invert(number: BigInt, modulo: BigInt) throws -> BigInt {
 
 public extension Fp {
     
-    static let order = Curve.P
-    var order: BigInt { Self.order }
-    static let maxBits = Self.order.bitWidthIgnoreSign
+    /// The order of this field equals the modulus of G1.
+    static let order = G1.Curve.modulus
     
     static let zero = Self(value: 0)
     static let one = Self(value: 1)
