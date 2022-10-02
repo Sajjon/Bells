@@ -12,10 +12,10 @@ import SwiftCheck
 import BigInt
 
 
-final class PointG1Tests: PointTest<PointG1> {
+final class P1Tests: PointTest<P1> {
     
     func test_point_multiplication_with_5() throws {
-        let a = PointG1(
+        let a = P1(
             x: .init(hex: "17f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb"),
             y: .init(hex: "08b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a5888ae40caa532946c5e7e1"),
             z: .one
@@ -30,7 +30,7 @@ final class PointG1Tests: PointTest<PointG1> {
     
     func test_point_double() throws {
  
-        let a = PointG1(
+        let a = P1(
             x: .init(hex: "17f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb"),
             y: .init(hex: "08b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a5888ae40caa532946c5e7e1"),
             z: .one
@@ -46,13 +46,13 @@ final class PointG1Tests: PointTest<PointG1> {
     func test_point_addition() throws {
         
   
-        let d = PointG1(
+        let d = P1(
             x: .init(hex: "02d7746f66839924e53de9082f8a65e4b5274a17c4fedc762f6e22ddddeb324d29871309744a3604cd346417f302c654"),
             y: .init(hex: "0dfc7d639436a6c7ab28584eb49eba8e2e9abc707e0fb990217cbcc77d9a6aabd19d7e3e078c51d0cc5f84ea2cee5e50"),
             z: .init(hex: "05e2b2e771f02e7353849a3e7f73987cdebd11ee33761af0bea90c4d508d91f91103f8ffeabd9dfde899dc4d19c2a636")
         )
   
-        let point = PointG1(
+        let point = P1(
             x: .init(hex: "17f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb"),
             y: .init(hex: "08b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a5888ae40caa532946c5e7e1"),
             z: .init(hex: "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001")
@@ -66,7 +66,7 @@ final class PointG1Tests: PointTest<PointG1> {
     }
     
     func test_point_multiplication_with_3() throws {
-        let a = PointG1(
+        let a = P1(
             x: .init(hex: "17f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb"),
             y: .init(hex: "08b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a5888ae40caa532946c5e7e1"),
             z: .one
@@ -80,7 +80,7 @@ final class PointG1Tests: PointTest<PointG1> {
     }
     
     func test_point_multiplication_with_2() throws {
-        let a = PointG1(
+        let a = P1(
             x: .init(hex: "17f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb"),
             y: .init(hex: "08b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a5888ae40caa532946c5e7e1"),
             z: .one
@@ -94,14 +94,14 @@ final class PointG1Tests: PointTest<PointG1> {
     }
     
     func test_point_is_on_curve_vector1() {
-        let a = PointG1(x: .zero, y: .one, z: .zero)
+        let a = P1(x: .zero, y: .one, z: .zero)
         XCTAssertNoThrow(try a.assertValidity())
     }
     
     
     
     func test_point_is_on_curve_vector2() {
-        let a = PointG1(
+        let a = P1(
             x: .init(hex: "17f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb"),
             y: .init(hex: "08b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a2888ae40caa232946c5e7e1"),
             z: .one
@@ -112,7 +112,7 @@ final class PointG1Tests: PointTest<PointG1> {
     
     
     func test_point_is_on_curve_vector3() {
-        let a = PointG1(
+        let a = P1(
             x: .init(value: BigInt("3924344720014921989021119511230386772731826098545970939506931087307386672210285223838080721449761235230077903044877", radix: 10)!),
             y: .init(value: BigInt("849807144208813628470408553955992794901182511881745746883517188868859266470363575621518219643826028639669002210378", radix: 10)!),
             z: .init(value: BigInt("3930721696149562403635400786075999079293412954676383650049953083395242611527429259758704756726466284064096417462642", radix: 10)!)
@@ -122,12 +122,12 @@ final class PointG1Tests: PointTest<PointG1> {
     }
     
     func test_point_not_on_curve_vector1() {
-        let a = PointG1(x: .zero, y: .one, z: .one)
+        let a = P1(x: .zero, y: .one, z: .one)
         XCTAssertThrowsError(try a.assertValidity())
     }
     
     func test_point_not_on_curve_vector2() {
-        let a = PointG1(
+        let a = P1(
             x: .init(hex: "17f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6ba"),
             y: .init(hex: "08b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a5888ae40caa532946c5e7e1"),
             z: .one
@@ -137,7 +137,7 @@ final class PointG1Tests: PointTest<PointG1> {
     }
     
     func test_point_not_on_curve_vector3() {
-        let a = PointG1(
+        let a = P1(
             x: .init(hex: "034a6fce17d489676fb0a38892584cb4720682fe47c6dc2e058811e7ba4454300c078d0d7d8a147a594b8758ef846cca"),
             y: .init(hex: "14e4b429606d02bc3c604c0410e5fc01d6093a00bb3e2bc9395952af0b6a0dbd599a8782a1bea48a5aa4d8e1b1df7caa"),
             z: .init(hex: "1167e903c75541e3413c61dae83b15c9f9ebc12baba015ec01b63196580967dba0798e89451115c8195446528d8bcfca")
@@ -147,7 +147,7 @@ final class PointG1Tests: PointTest<PointG1> {
     }
     
     func test_doubled_on_curve_vector1() {
-        let a = PointG1(
+        let a = P1(
             x: .init(hex: "17f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb"),
             y: .init(hex: "08b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a2888ae40caa232946c5e7e1"),
             z: .one
@@ -170,7 +170,7 @@ final class PointG1Tests: PointTest<PointG1> {
     }
     
     func test_doubled_on_curve_vector2() {
-        let a = PointG1(
+        let a = P1(
             x: .init(value: BigInt("3924344720014921989021119511230386772731826098545970939506931087307386672210285223838080721449761235230077903044877", radix: 10)!),
             y: .init(value: BigInt("849807144208813628470408553955992794901182511881745746883517188868859266470363575621518219643826028639669002210378", radix: 10)!),
             z: .init(value: BigInt("3930721696149562403635400786075999079293412954676383650049953083395242611527429259758704756726466284064096417462642", radix: 10)!)
@@ -195,7 +195,7 @@ final class PointG1Tests: PointTest<PointG1> {
     
     func test_should_not_validate_incorrect_point() {
 
-        let p = PointG1(
+        let p = P1(
             x: .init(value: BigInt("499001545268060011619089734015590154568173930614466321429631711131511181286230338880376679848890024401335766847607", radix: 10)!),
             y: .init(value: BigInt("3934582309586258715640230772291917282844636728991757779640464479794033391537662970190753981664259511166946374555673", radix: 10)!)
         )
@@ -204,7 +204,7 @@ final class PointG1Tests: PointTest<PointG1> {
     }
 }
 
-extension PointG1: Arbitrary {
+extension P1: Arbitrary {
     public static var arbitrary: Gen<Self> {
         .compose { composer in
             Self(

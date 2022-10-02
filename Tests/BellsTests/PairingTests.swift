@@ -10,39 +10,39 @@ import XCTest
 @testable import Bells
 import BigInt
 
-let G1 = PointG1.generator
-let G2 = PointG2.generator
+let p1Gen = P1.generator
+let p2Gen = PointG2.generator
 
 final class PairingTests: XCTestCase {
     
     func test_pairing() throws {
-        let p1 = try BLS.pairing(P: G1, Q: G2)
-        let p2 = try BLS.pairing(P: G1.negated(), Q: G2)
+        let p1 = try BLS.pairing(P: p1Gen, Q: p2Gen)
+        let p2 = try BLS.pairing(P: p1Gen.negated(), Q: p2Gen)
         XCTAssertEqual(p1 * p2, Fp12.one)
     }
     
     func test_creates_negative_G2_pairing() throws {
-        let p1 = try BLS.pairing(P: G1.negated(), Q: G2)
-        let p2 = try BLS.pairing(P: G1, Q: G2.negated())
+        let p1 = try BLS.pairing(P: p1Gen.negated(), Q: p2Gen)
+        let p2 = try BLS.pairing(P: p1Gen, Q: p2Gen.negated())
         XCTAssertEqual(p1, p2)
     }
     
     func test_creates_proper_pairing_output_order() throws {
-        let p1 = try BLS.pairing(P: G1, Q: G2)
+        let p1 = try BLS.pairing(P: p1Gen, Q: p2Gen)
         let p2 = try p1.pow(n: Curve.r)
         XCTAssertEqual(p2, Fp12.one)
     }
     
     func test_G1_billinearity() throws {
-        let p1 = try BLS.pairing(P: G1, Q: G2)
-        let p2 = try BLS.pairing(P: G1 * 2, Q: G2)
+        let p1 = try BLS.pairing(P: p1Gen, Q: p2Gen)
+        let p2 = try BLS.pairing(P: p1Gen * 2, Q: p2Gen)
         XCTAssertEqual(p1 * p1, p2)
     }
     
     
     // Vector from https://github.com/zkcrypto/pairing
     func test_vector() throws {
-        let p1 = try BLS.pairing(P: G1, Q: G2)
+        let p1 = try BLS.pairing(P: p1Gen, Q: p2Gen)
         XCTAssertEqual(
             p1,
             Fp12(coeffs: [
@@ -63,23 +63,23 @@ final class PairingTests: XCTestCase {
     }
     
     func test_should_not_degenerate() throws {
-        let p1 = try BLS.pairing(P: G1, Q: G2)
-        let p2 = try BLS.pairing(P: G1 * 2, Q: G2)
-        let p3 = try BLS.pairing(P: G1, Q: G2.negated())
+        let p1 = try BLS.pairing(P: p1Gen, Q: p2Gen)
+        let p2 = try BLS.pairing(P: p1Gen * 2, Q: p2Gen)
+        let p3 = try BLS.pairing(P: p1Gen, Q: p2Gen.negated())
         XCTAssertNotEqual(p1, p2)
         XCTAssertNotEqual(p1, p3)
         XCTAssertNotEqual(p2, p3)
     }
     
     func test_G2_billinearity() throws {
-        let p1 = try BLS.pairing(P: G1, Q: G2)
-        let p2 = try BLS.pairing(P: G1, Q: G2 * 2)
+        let p1 = try BLS.pairing(P: p1Gen, Q: p2Gen)
+        let p2 = try BLS.pairing(P: p1Gen, Q: p2Gen * 2)
         XCTAssertEqual(p1 * p1, p2)
     }
     
     func test_proper_pairing_composite_check() throws {
-        let p1 = try BLS.pairing(P: G1 * 37, Q: G2 * 27)
-        let p2 = try BLS.pairing(P: G1 * 999, Q: G2)
+        let p1 = try BLS.pairing(P: p1Gen * 37, Q: p2Gen * 27)
+        let p2 = try BLS.pairing(P: p1Gen * 999, Q: p2Gen)
         XCTAssertEqual(37 * 27, 999)
         XCTAssertEqual(p1, p2)
     }

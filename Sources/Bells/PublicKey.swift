@@ -8,8 +8,8 @@
 import Foundation
 
 public struct PublicKey: Equatable {
-    public let point: PointG1
-    public init(point: PointG1) {
+    public let point: P1
+    public init(point: P1) {
         self.point = point
     }
 }

@@ -19,7 +19,7 @@ public extension PrivateKey {
     
     func publicKey() -> PublicKey {
         try! .init(
-            point: PointG1.generator.multiplyPrecomputed(scalar: scalar)
+            point: P1.generator.multiplyPrecomputed(scalar: scalar)
         )
     }
 }

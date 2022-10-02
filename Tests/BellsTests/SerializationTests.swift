@@ -27,26 +27,26 @@ extension ProjectivePoint {
 @MainActor
 final class SerializationTests: XCTestCase {
 
-    func test_construct_PointG1_uncompressed_raw_bytes_zero() throws {
-        let g1 = try PointG1(hex: "400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")
+    func test_construct_P1_uncompressed_raw_bytes_zero() throws {
+        let g1 = try P1(hex: "400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")
         XCTAssertTrue(g1.isZero)
-        XCTAssertEqual(g1, PointG1.zero)
-        XCTAssertEqual(g1.x, PointG1.zero.x)
-        XCTAssertEqual(g1.y, PointG1.zero.y)
-        XCTAssertEqual(g1.z, PointG1.zero.z)
+        XCTAssertEqual(g1, P1.zero)
+        XCTAssertEqual(g1.x, P1.zero.x)
+        XCTAssertEqual(g1.y, P1.zero.y)
+        XCTAssertEqual(g1.z, P1.zero.z)
     }
     
-    func test_construct_PointG1_compressed_raw_bytes_zero() throws {
-        let g1 = try PointG1(hex: "c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")
+    func test_construct_P1_compressed_raw_bytes_zero() throws {
+        let g1 = try P1(hex: "c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")
         XCTAssertTrue(g1.isZero)
-        XCTAssertEqual(g1, PointG1.zero)
-        XCTAssertEqual(g1.x, PointG1.zero.x)
-        XCTAssertEqual(g1.y, PointG1.zero.y)
-        XCTAssertEqual(g1.z, PointG1.zero.z)
+        XCTAssertEqual(g1, P1.zero)
+        XCTAssertEqual(g1.x, P1.zero.x)
+        XCTAssertEqual(g1.y, P1.zero.y)
+        XCTAssertEqual(g1.z, P1.zero.z)
     }
     
-    func test_construct_PointG1_uncompressed_raw_bytes() throws {
-        let g1 = try PointG1(hex:
+    func test_construct_P1_uncompressed_raw_bytes() throws {
+        let g1 = try P1(hex:
              "17f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb08b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a2888ae40caa232946c5e7e1"
            )
         
@@ -68,7 +68,7 @@ final class SerializationTests: XCTestCase {
         
         
     XCTAssertEqual(g1.toData(compress: true).hex(), "97f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb")
-        let deserializedFromCompressed = try PointG1(hex: "97f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb")
+        let deserializedFromCompressed = try P1(hex: "97f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb")
         XCTAssertEqual(deserializedFromCompressed, g1)
     }
     
@@ -78,9 +78,9 @@ final class SerializationTests: XCTestCase {
         
         try await elementOnCurveTest(
             name: "g1_uncompressed_valid_test_vectors",
-            projectiveType: PointG1.self,
+            projectiveType: P1.self,
             serialize: { $0.toData(compress: false) },
-            deserialize: PointG1.init(bytes:)
+            deserialize: P1.init(bytes:)
         )
     }
     
@@ -88,9 +88,9 @@ final class SerializationTests: XCTestCase {
         
         try await elementOnCurveTest(
             name: "g1_compressed_valid_test_vectors",
-            projectiveType: PointG1.self,
+            projectiveType: P1.self,
             serialize: { $0.toData(compress: true) },
-            deserialize: PointG1.init(bytes:)
+            deserialize: P1.init(bytes:)
         )
     }
 }

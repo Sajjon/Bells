@@ -495,7 +495,7 @@ internal extension BLS {
     }
     
     // Calculates bilinear pairing
-    static func pairing(P: PointG1, Q: PointG2, withFinalExponent: Bool = true) throws -> Fp12 {
+    static func pairing(P: P1, Q: PointG2, withFinalExponent: Bool = true) throws -> Fp12 {
         guard !P.isZero, !Q.isZero else {
             throw NoPairingExistsAtPointOfInfinity()
         }

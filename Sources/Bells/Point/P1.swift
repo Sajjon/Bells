@@ -9,13 +9,14 @@ import Foundation
 import BigInt
 import RealModule
 
-// MARK: PointG1
+// MARK: P1
 
-/// Point on G1 curve: `(x, y, z)`, in the `Fp` field.
+/// Projective point `(x, y , z)` in the `Fp` field, that **might not** be on the curve,
+/// (belong to the group G1)
 ///
 /// We add `z` because we work with projective coordinates instead of affine `x-y`,
 /// which results in faster performance.
-public struct PointG1: ProjectivePoint, Equatable {
+public struct P1: ProjectivePoint, Equatable {
     public let __storageForPrecomputes: StorageOfPrecomputedProjectivePoints<Self>
     public let x: Fp
     public let y: Fp
@@ -30,7 +31,7 @@ public struct PointG1: ProjectivePoint, Equatable {
 }
 
 // MARK: Init
-public extension PointG1 {
+public extension P1 {
     static let zDefault = Fp.one
     
     init(compressedData: Data) throws {
@@ -91,7 +92,7 @@ public extension PointG1 {
 }
 
 // MARK: Constants
-public extension PointG1 {
+public extension P1 {
     typealias F = Fp
     
     /// The generator point of a the group `G1`.
@@ -105,7 +106,7 @@ public extension PointG1 {
 }
 
 // MARK: Public
-public extension PointG1 {
+public extension P1 {
     @discardableResult
     func assertValidity() throws -> Self {
         if isZero {
@@ -137,7 +138,7 @@ public extension PointG1 {
 }
 
 // MARK: ProjectivePoint
-public extension PointG1 {
+public extension P1 {
     /// Checks that equation is fulfilled: `y² = x³ + b`
     func isOnCurve() -> Bool {
         do {
@@ -181,9 +182,9 @@ public extension PointG1 {
 }
 
 // MARK: Private
-private extension PointG1 {
+private extension P1 {
     /// `σ endomorphism`
-    func sigma() throws -> PointG1 {
+    func sigma() throws -> P1 {
         let beta = Frobenius.aaac
         let affine = try toAffine()
         let x = affine.x
@@ -251,6 +252,6 @@ private extension PointG1 {
     }
 }
 
-extension PointG1 {
+extension P1 {
     typealias Error = ProjectivePointError
 }
