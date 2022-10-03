@@ -57,6 +57,59 @@ final class HashSignAndVerifyTest: XCTestCase {
         isValidOther = await PublicKey.other.isValidSignature(.forged, for: message)
         XCTAssertFalse(isValidOther)
     }
+
+    
+    func test_sign_with_many() async throws {
+        // Sign 1 msg with 3 keys
+        let privateKeys = try [
+            "18f020b98eb798752a50ed0563b079c125b0db5dd0b1060d1c1b47d4a193e1e4",
+            "23eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000000",
+            "16ae669f3be7a2121e17d0c68c05a8f3d6bef21ec0f2315f1d7aec12484e4cf5"
+        ].map { try PrivateKey(scalar: .init(hex: $0)) }
+          
+        let message = try await Message(hashing: Data(hex: "64726e3da8"))
+        XCTAssertEqual(message.toHex(compress: true), "a699307340f1f399717e7009acb949d800d09bda1be7f239179d2e2fd9096532e5f597b3d736412bd6cd073ca4fe8056038fa6a09f5ef9e47a9c61d869d8c069b487e64a57f701b2e724fa8cce8fce050d850eeb1b4a39195ce71eed0cb5c807")
+
+        
+        let publicKeys = privateKeys.map { $0.publicKey() }
+        let signatures = try await privateKeys.asyncMap { try await $0.sign(message: message) }
+        let aggregatedPublicKey = try PublicKey.aggregate(publicKeys)
+        let aggregatedSignature = try Signature.aggregate(signatures)
+
+        let isValid = await aggregatedPublicKey.isValidSignature(aggregatedSignature, for: message)
+        XCTAssertTrue(isValid)
+        
+        XCTAssertEqual(aggregatedPublicKey.toHex(compress: true), "99f1d4ae64167802393b76a3a14719ee449b59a0e5440ee9d8cc27eedbf42d0783430598ada1d8027910d8d8c2511461")
+        
+        XCTAssertEqual(aggregatedSignature.toHex(compress: true), "8ba8334c1abba0bd490b14bae814d9e674a6f649dfbe72be2e6caf9b882f0a5b5612fc7ff1865c15f1d3b36faae71322063d92170fa2eaed48a3fddcfd5a2a1de29cb05bdd70ac6e7d7d103e913dc187a56aa1d18229d635f6ca6dddfc8d0cff")
+        
+        
+        var isValidOther = true
+        
+        // Other PublicKey
+        isValidOther = await PublicKey.other.isValidSignature(aggregatedSignature, for: message)
+        XCTAssertFalse(isValidOther)
+        
+        // Forge signature
+        isValidOther = await aggregatedPublicKey.isValidSignature(.forged, for: message)
+        XCTAssertFalse(isValidOther)
+        
+        // Other message
+        isValidOther = await aggregatedPublicKey.isValidSignature(aggregatedSignature, for: .other)
+        XCTAssertFalse(isValidOther)
+        
+        // Other PublicKey, Other message (same sig)
+        isValidOther = await PublicKey.other.isValidSignature(aggregatedSignature, for: .other)
+        XCTAssertFalse(isValidOther)
+        
+        // Forge signature, Other Message (same pubkey)
+        isValidOther = await aggregatedPublicKey.isValidSignature(.forged, for: .other)
+        XCTAssertFalse(isValidOther)
+        
+        // Other PublicKey, Forge signature (same message)
+        isValidOther = await PublicKey.other.isValidSignature(.forged, for: message)
+        XCTAssertFalse(isValidOther)
+    }
 }
 
 private extension Signature {
@@ -71,4 +124,18 @@ private extension Message {
 
 private extension PublicKey {
     static let other: Self = try! PrivateKey(scalar: 237).publicKey()
+}
+
+extension Sequence {
+    func asyncMap<T>(
+        _ transform: (Element) async throws -> T
+    ) async rethrows -> [T] {
+        var values = [T]()
+
+        for element in self {
+            try await values.append(transform(element))
+        }
+
+        return values
+    }
 }

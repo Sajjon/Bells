@@ -45,7 +45,18 @@ public extension PublicKey {
             return false
         }
     }
+    
+    /// Adds a bunch of public key points together.
+    /// `pk1 + pk2 + pk3 + ... + pkN = pkA`
+    static func aggregate(_ publicKeys: [Self]) throws -> Self {
+        guard !publicKeys.isEmpty else {
+            throw CannotAggregateEmptyList()
+        }
+        let aggregatedPoint = publicKeys.map { $0.groupElement.point }.reduce(Group.Point.zero, +)
+        return try Self(groupElement: .init(point: aggregatedPoint))
+    }
 }
+struct CannotAggregateEmptyList: Error {}
 
 internal extension PublicKey {
     

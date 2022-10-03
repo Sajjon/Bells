@@ -506,6 +506,8 @@ internal extension BLS {
         let looped = try g1.point.millerLoop(p2: g2.point)
         return try withFinalExponent ? looped.finalExponentiate() : looped
     }
+    
+    
 }
 struct NoPairingExistsAtPointOfInfinity: Error {}
 

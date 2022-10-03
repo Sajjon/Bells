@@ -15,3 +15,16 @@ public struct Signature: Equatable, GroupElementConveritible {
         self.groupElement = groupElement
     }
 }
+
+public extension Signature {
+    
+    /// Adds a bunch of signature points together.
+    /// `s1 + s2 + s3 + ... + sN = sA`
+    static func aggregate(_ signatures: [Self]) throws -> Self {
+        guard !signatures.isEmpty else {
+            throw CannotAggregateEmptyList()
+        }
+        let aggregatedPoint = signatures.map { $0.groupElement.point }.reduce(Group.Point.zero, +)
+        return try Self(groupElement: .init(point: aggregatedPoint))
+    }
+}
