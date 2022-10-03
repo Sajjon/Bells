@@ -10,7 +10,40 @@ import XCTest
 @testable import Bells
 import BigInt
 
+extension FiniteGroup {
+    init(hex: String) throws {
+        try self.init(bytes: Data(hex: hex))
+    }
+}
+
+
 final class G1Tests: GroupTest<G1> {
+    
+    func test_construct_P1_uncompressed_raw_bytes() throws {
+        let g1 = try G1(hex:
+             "17f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb08b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a2888ae40caa232946c5e7e1"
+           )
+        
+        let x = Fp(value:
+             BigInt(
+                "17f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb", radix: 16)!
+                   )
+        let y = Fp(value:
+             BigInt(
+                "08b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a2888ae40caa232946c5e7e1", radix: 16)!
+           )
+
+        XCTAssertEqual(g1.x, x)
+        XCTAssertEqual(g1.y, y)
+
+            
+        XCTAssertEqual(g1.toData(compress: false).hex(), "17f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb08b3f481e3aaa0f1a09e30ed741d8ae4fcf5e095d5d00af600db18cb2c04b3edd03cc744a2888ae40caa232946c5e7e1")
+        
+        
+    XCTAssertEqual(g1.toData(compress: true).hex(), "97f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb")
+        let deserializedFromCompressed = try G1(hex: "97f1d3a73197d7942695638c4fa9ac0fc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb")
+        XCTAssertEqual(deserializedFromCompressed, g1)
+    }
     
     func test_g1_from_xyz_valid_point() {
         XCTAssertNoThrow(
@@ -28,6 +61,38 @@ final class G1Tests: GroupTest<G1> {
             y: .init(hex: "14e4b429606d02bc3c604c0410e5fc01d6093a00bb3e2bc9395952af0b6a0dbd599a8782a1bea48a5aa4d8e1b1df7caa"),
             z: .init(hex: "1167e903c75541e3413c61dae83b15c9f9ebc12baba015ec01b63196580967dba0798e89451115c8195446528d8bcfca")
         ))
+    }
+    
+    func test_construct_P1_uncompressed_raw_bytes_zero() throws {
+        let g1 = try G1(hex: "400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")
+        XCTAssertEqual(g1, .zero)
+    }
+    
+    func test_construct_P1_compressed_raw_bytes_zero() throws {
+        let g1 = try G1(hex: "c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")
+        XCTAssertEqual(g1, .zero)
+    }
+    
+
+    
+    func test_g1_uncompressed() async throws {
+        
+        try await elementOnCurveTest(
+            name: "g1_uncompressed_valid_test_vectors",
+            groupType: G1.self,
+            serialize: { $0.toData(compress: false) },
+            deserialize: G1.init(uncompressedData:)
+        )
+    }
+    
+    func test_g1_compressed() async throws {
+        
+        try await elementOnCurveTest(
+            name: "g1_compressed_valid_test_vectors",
+            groupType: G1.self,
+            serialize: { $0.toData(compress: true) },
+            deserialize: G1.init(compressedData:)
+        )
     }
     
 }

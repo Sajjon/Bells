@@ -33,68 +33,14 @@ public struct P1: ProjectivePoint, Equatable {
 // MARK: Init
 public extension P1 {
     static let zDefault = Fp.one
-    
-    init(compressedData: Data) throws {
-        guard compressedData.count == BLS.publicKeyCompressedByteCount else {
-            throw Error.invalidByteCount(butGot: compressedData.count)
-        }
-        
-        let compressedValue = os2ip(compressedData)
-        
-        let bflag = mod(a: compressedValue, b: BLS.exp2_383) / BLS.exp2_382
-        
-        if (bflag == 1) {
-            self = Self.zero
-        } else {
-            let x = Fp(value: mod(a: compressedValue, b: BLS.exp2_381))
-            let ySquared = try x.pow(n: 3) + Self.b
-            guard var y = ySquared.sqrt() else {
-                throw Error.invalidCompressedPoint
-            }
-            
-            let aflag = mod(a: compressedValue, b: BLS.exp2_382) / BLS.exp2_381
-            
-            if ((y.value * 2) / G1.Curve.P) != aflag {
-                y.negate()
-            }
-            
-            self.init(x: x, y: y)
-        }
-        try assertValidity()
-    }
-    
-    init(uncompressedData: Data) throws {
-        guard uncompressedData.count == BLS.publicKeyUncompressedByteCount else {
-            throw Error.invalidByteCount(butGot: uncompressedData.count)
-        }
-        
-        // Check if the infinity flag is set
-        if (uncompressedData[0] & (1 << 6)) != 0 {
-            self = .zero
-        } else {
-            let x = os2ip(Data(uncompressedData.prefix(BLS.publicKeyCompressedByteCount)))
-            let y = os2ip(Data(uncompressedData.suffix(BLS.publicKeyCompressedByteCount)))
-            self.init(x: .init(value: x), y: .init(value: y))
-        }
-        try assertValidity()
-    }
-    
-    init(bytes: some ContiguousBytes) throws {
-        let data = bytes.withUnsafeBytes { Data($0) }
-        if data.count == BLS.publicKeyCompressedByteCount {
-            try self.init(compressedData: data)
-        } else {
-            try self.init(uncompressedData: data)
-        }
-      
-    }
+   
 }
 
 // MARK: Constants
 public extension P1 {
     typealias F = Fp
     
-    static let b = Fp(value: G1.Curve.b)
+
 }
 
 // MARK: Public
@@ -139,38 +85,7 @@ public extension P1 {
             return false
         }
     }
-   
-    // MARK: Data Serialization
-    func toData(compress: Bool = false) -> Data {
-        try! assertValidity()
-   
-        var out: BigInt
-        if compress {
-            let P = G1.Curve.P
-            if isZero {
-                out = BLS.exp2_383 + BLS.exp2_382
-            } else {
-                let affine = try! self.toAffine()
-                let x = affine.x
-                let y = affine.y
-                let flag = (y.value * 2) / P
-                out = x.value + (flag * BLS.exp2_381) + BLS.exp2_383
-            }
-            return out.serialize(padToLength: BLS.publicKeyCompressedByteCount)
-        } else {
-            if isZero {
-                var out = Data(repeating: 0x00, count: 2 * BLS.publicKeyCompressedByteCount)
-                out[0] = 0x40
-                return out
-            } else {
-                let affine = try! self.toAffine()
-                let x = affine.x
-                let y = affine.y
-                return x.value.serialize(padToLength: BLS.publicKeyCompressedByteCount) + y.value.serialize(padToLength: BLS.publicKeyCompressedByteCount)
-            }
-        }
-        
-    }
+
 }
 
 // MARK: Private
@@ -239,7 +154,7 @@ private extension P1 {
     
     func _isOnCurve() throws -> Bool {
         let left = try y.pow(n: 2) * z - x.pow(n: 3)
-        let right = try Self.b * z.pow(n: 3)
+        let right = try G1.b * z.pow(n: 3)
         return (left - right).isZero
     }
 }

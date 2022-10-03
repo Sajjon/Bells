@@ -60,8 +60,153 @@ public extension G2.Curve {
     /// The BLS parameter `x` for BLS12-381
     static let x = G1.Curve.x
     
-    static let b = (4, 4)
-    
+    static let b = Fp2((BigInt(4), BigInt(4)))
     
     static let hEff = BigInt("bc69f08f2ee75b3584c6a0ea91b352888e2a8e9145ad7689986ff031508ffe1329c2f178731db956d82bf015d1212b02ec0ec69d7477c1ae954cbc06689f6a359894c0adebbf6b4e8020005aaa95551", radix: 16)!
+}
+
+struct BadEncodingFlag: Error {}
+struct InvalidCompressedG2Point: Error {}
+public extension G2 {
+    typealias Error = ProjectivePointError
+    static let compressedDataByteCount = 96
+    static let uncompressedDataByteCount = 192
+    
+    init(x: Fp2, y: Fp2, z: Fp2) throws {
+        try self.init(point: .init(x: x, y: y, z: z))
+    }
+    
+    private static func flags(from data: Data) throws -> (bitC: Bool, bitI: Bool, bitS: Bool) {
+        try flags(from: data[0])
+    }
+    private static func flags(from mByte: UInt8) throws -> (bitC: Bool, bitI: Bool, bitS: Bool) {
+        guard mByte != 0x20, mByte != 0x60, mByte != 0xe0 else {
+            throw BadEncodingFlag()
+        }
+        let bitC = (mByte & (1 << 7)) != 0 // compression bit
+        let bitI = (mByte & (1 << 6)) != 0 // point at infinity bit
+        let bitS = (mByte & (1 << 5)) != 0 // sign bit
+        return (bitC, bitI, bitS)
+    }
+
+    init(compressedData data: Data) throws {
+        guard data.count == Self.compressedDataByteCount else {
+            throw Error.invalidByteCount(
+                expectedCompressed: Self.compressedDataByteCount,
+                orUncompressed: Self.uncompressedDataByteCount,
+                butGot: data.count
+            )
+        }
+        let (flagC, flagI, flagS) = try Self.flags(from: data)
+        guard flagC else {
+            throw BadEncodingFlag()
+        }
+        var bytes = [UInt8](data)
+        bytes[0] = bytes[0] & 0x1f // clear flags
+        if flagI {
+            // check that all bytes are 0
+            guard bytes.allSatisfy({ $0 == 0x00 }) else {
+                throw InvalidCompressedG2Point()
+            }
+            self = .zero
+        } else {
+            let x1 = os2ip(Data(bytes.removingFirst(Self.compressedDataByteCount/2)))
+            let x0 = os2ip(Data(bytes.removingFirst(Self.compressedDataByteCount/2)))
+            assert(bytes.isEmpty)
+            let x = Fp2(c0: x0, c1: x1)
+            
+            // `y² = x³ + 4 * (u+1)` <=>
+            // `y² = x³ + b`
+            let y² = try x.pow(n: 3) + Curve.b
+            var y = try y².sqrt()
+            guard !y.isZero else {
+                throw InvalidCompressedG2Point()
+            }
+            let P = Curve.P
+            let t0 = (y.c0.value * 2) / P
+            let t1 = (y.c1.value * 2) / P
+            let yBit = (y.c1.value == 0 ? t0 : t1) == 0 ? 1 : 0
+            y = flagS && yBit > 0 ? y : y.negated()
+            try self.init(x: x, y: y, z: .one)
+        }
+
+    }
+    
+    init(uncompressedData data: Data) throws {
+        guard data.count == Self.uncompressedDataByteCount else {
+            throw Error.invalidByteCount(
+                expectedCompressed: Self.compressedDataByteCount,
+                orUncompressed: Self.uncompressedDataByteCount,
+                butGot: data.count
+            )
+        }
+     
+        // Check if the infinity flag is set
+        if (data[0] & (1 << 6)) != 0 {
+            self = .zero
+        } else {
+            var bytes = data
+            let x1 = os2ip(bytes.removingFirst(G1.compressedDataByteCount))
+            let x0 = os2ip(bytes.removingFirst(G1.compressedDataByteCount))
+            let y1 = os2ip(bytes.removingFirst(G1.compressedDataByteCount))
+            let y0 = os2ip(bytes.removingFirst(G1.compressedDataByteCount))
+            assert(bytes.isEmpty)
+            
+            try self.init(x: .init(c0: x0, c1: x1), y: .init(c0: y0, c1: y1), z: .one)
+        }
+    }
+
+    func toData(compress: Bool) -> Data {
+    
+        if compress {
+            var x0: BigInt = 0
+            var x1: BigInt = 0
+            if isZero {
+                // set compressed & point-at-infinity bits
+                x1 = BLS.exp2_383 + BLS.exp2_382
+            } else {
+                let affine = try! point.toAffine()
+                let x = affine.x
+                let y = affine.y
+                
+                // Is the y-coordinate the lexicographically largest of the two associated with the
+                // x-coordinate? If so, set the third-most significant bit so long as this is not
+                // the point at infinity.
+                let flag: BigInt = {
+                    let P = G1.Curve.P
+                    return y.c1.value == 0 ? (y.c0.value * 2) / P : (((y.c1.value * 2) / P) != 0) ? 1 : 0
+                }()
+                
+                // set compressed & sign bits
+                x1 = x.c1.value + (flag * BLS.exp2_381) + BLS.exp2_383
+                x0 = x.c0.value
+            }
+            return x1.serialize(padToLength: BLS.publicKeyCompressedByteCount) + x0.serialize(padToLength: BLS.publicKeyCompressedByteCount)
+        } else {
+            if isZero {
+                var out = Data(repeating: 0x00, count: 2 * BLS.publicKeyUncompressedByteCount)
+                out[0] = 0x40
+                return out
+            }
+            let affine = try! point.toAffine()
+            let x0 = affine.x.c0
+            let x1 = affine.x.c1
+            let y0 = affine.y.c0
+            let y1 = affine.y.c1
+            return [x1, x0, y1, y0].map {
+                $0.value.serialize(padToLength: BLS.publicKeyCompressedByteCount)
+            }.reduce(Data(), +)
+        }
+    }
+    
+}
+
+
+
+extension RangeReplaceableCollection {
+    mutating func removingFirst(_ length: Int) -> Self {
+        let removed = prefix(length)
+        removeFirst(length)
+        return Self(removed)
+    }
 }

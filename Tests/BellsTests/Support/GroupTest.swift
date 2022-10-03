@@ -74,3 +74,41 @@ extension FiniteGroup {
 extension G1: Arbitrary {}
 
 extension G2: Arbitrary {}
+
+
+extension Int {
+    static let hexCharsPerByte = 2
+}
+extension BLS {
+    static let publicKeyUncompressedHexCount = publicKeyUncompressedByteCount * .hexCharsPerByte
+}
+
+
+extension GroupTest {
+    
+    @MainActor
+    func elementOnCurveTest<G>(
+        name: String,
+        groupType: G.Type,
+        serialize: @escaping (G) throws -> Data,
+        deserialize: @escaping (Data) throws -> G,
+        line: UInt = #line
+    ) async throws where G: FiniteGroup {
+        try await doTestDATFixture(name: name, line: line) { suiteData in
+            var e = G.identity
+            var bytesLeftToParse = suiteData
+            for _ in 0..<1000 {
+                let serializedBytes = try serialize(e)
+                let byteCount = serializedBytes.count
+                
+                let bytesToDeserialize = bytesLeftToParse.removingFirst(byteCount)
+                let pointDeserialized = try deserialize(bytesToDeserialize)
+      
+                XCTAssertEqual(serializedBytes, bytesToDeserialize)
+                XCTAssertEqual(e, pointDeserialized)
+                try e += G.generator
+            }
+            XCTAssertEqual(bytesLeftToParse.count, 0, line: line)
+        }
+    }
+}

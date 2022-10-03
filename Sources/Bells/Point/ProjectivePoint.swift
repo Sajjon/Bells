@@ -57,11 +57,6 @@ where Affine == AffinePoint<F> {
     /// Converts an affine point into this projective point.
     init(affine: Affine)
    
-    /// Deserialize a point from data (bytes).
-    init(bytes: some ContiguousBytes) throws
-    init(uncompressedData: Data) throws
-    init(compressedData: Data) throws
-
     static var zero: Self { get }
     
     /// Checks if this element is the `zero` element.
@@ -79,9 +74,6 @@ where Affine == AffinePoint<F> {
     ///
     /// Default implementation provided.
     func toAffine(invertedZ: F?) throws -> AffinePoint<F>
-    
-    /// Serialize point into data (bytes). Might be on compressed form.
-    func toData(compress: Bool) -> Data
     
     /// String representation of this point.
     ///

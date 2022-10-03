@@ -100,8 +100,8 @@ public extension BLS {
     /// `S_bit`, sign bit for serialization flag
     static let exp2_383 = exp2_382 * 2
     
-    static let publicKeyCompressedByteCount = 48
-    static let publicKeyUncompressedByteCount = publicKeyCompressedByteCount * 2
+    static let publicKeyCompressedByteCount = G1.compressedDataByteCount
+    static let publicKeyUncompressedByteCount = G1.uncompressedDataByteCount
 }
 
 

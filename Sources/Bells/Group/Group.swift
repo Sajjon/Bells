@@ -43,12 +43,15 @@ where Curve.Group == Self {
     static var identity: Self { get }
     
     var point: Point { get }
+    init(x: Point.F, y: Point.F, z: Point.F) throws
     var isZero: Bool { get }
     init(point: Point) throws
     init(bytes: some ContiguousBytes) throws
     init(uncompressedData: Data) throws
     init(compressedData: Data) throws
     
+    static var compressedDataByteCount: Int { get }
+    static var uncompressedDataByteCount: Int { get }
     func toData(compress: Bool) -> Data
 }
 
@@ -72,30 +75,25 @@ private extension FiniteGroup {
 
 
 public extension FiniteGroup {
+    static var identity: Self { try! Self(x: .one, y: .one, z: .zero) }
+    static var zero: Self { try! Self.init(point: .zero) }
     
-    init(x: Point.F, y: Point.F, z: Point.F) throws {
-        try self.init(point: Point(x: x, y: y, z: z))
+    init(bytes: some ContiguousBytes) throws {
+        let data = bytes.withUnsafeBytes { Data($0) }
+        if data.count == Self.compressedDataByteCount {
+            try self.init(compressedData: data)
+        } else if data.count == Self.uncompressedDataByteCount {
+            try self.init(uncompressedData: data)
+        } else {
+            throw ProjectivePointError.invalidByteCount(
+                expectedCompressed: Self.compressedDataByteCount,
+                orUncompressed: Self.uncompressedDataByteCount,
+                butGot: data.count
+            )
+        }
     }
     
     var isZero: Bool { point.isZero }
-    
-    static var identity: Self {
-        try! .init(
-            point: .init(x: .zero, y: .one, z: .zero)
-        )
-    }
-    init(bytes: some ContiguousBytes) throws {
-        try self.init(point: Point(bytes: bytes))
-    }
-    init(uncompressedData: Data) throws {
-        try self.init(point: Point(uncompressedData: uncompressedData))
-    }
-    init(compressedData: Data) throws {
-        try self.init(point: Point(compressedData: compressedData))
-    }
-    func toData(compress: Bool = false) -> Data {
-        point.toData(compress: compress)
-    }
 }
 public extension FiniteGroup {
     var x: Point.F { point.x }

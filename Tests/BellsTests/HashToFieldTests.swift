@@ -18,7 +18,7 @@ final class HashToFieldTests: XCTestCase {
         let m: Int = 0x2 // 2
         let k: Int = 0x80 // 128
         let p = BigInt(hex: "1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab")
-        XCTAssertEqual(p, G2.Curve.P)
+        XCTAssertEqual(p, G1.Curve.P)
         
         let config = HashToFieldConfig(domainSeperationTag: dst, p: p, m: m, k: k)
         XCTAssertEqual(config, .init(domainSeperationTag: dst))

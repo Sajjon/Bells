@@ -20,9 +20,14 @@ public struct G1: FiniteGroup, Equatable {
     public init(point: Point) throws {
         self.point =  try point.assertValidity()
     }
+    
+    public init(x: F, y: F, z: F = P1.zDefault) throws {
+        try self.init(point: .init(x: x, y: y, z: z))
+    }
 }
 
 public extension G1 {
+    typealias F = Point.F
     typealias Point = P1
     
     /// `E₁: y² = x³ + 4`
@@ -53,4 +58,88 @@ public extension G1.Curve {
     static let b: BigInt = 4
     /// The BLS parameter x for BLS12-381
     static let x = BigInt("d201000000010000", radix: 16)!
+}
+
+public extension G1 {
+    static let compressedDataByteCount = 48
+    static let uncompressedDataByteCount = 96
+  
+    static let b = Fp(value: G1.Curve.b)
+    typealias Error = ProjectivePointError
+    init(compressedData: Data) throws {
+        guard compressedData.count == Self.compressedDataByteCount else {
+            throw Error.invalidByteCount(expectedCompressed: Self.compressedDataByteCount, orUncompressed: Self.uncompressedDataByteCount, butGot: compressedData.count)
+        }
+        
+        let compressedValue = os2ip(compressedData)
+        
+        let bflag = mod(a: compressedValue, b: BLS.exp2_383) / BLS.exp2_382
+        
+        if (bflag == 1) {
+            self = Self.zero
+        } else {
+            let x = Fp(value: mod(a: compressedValue, b: BLS.exp2_381))
+            let ySquared = try x.pow(n: 3) + Self.b
+            guard var y = ySquared.sqrt() else {
+                throw Error.invalidCompressedPoint
+            }
+            
+            let aflag = mod(a: compressedValue, b: BLS.exp2_382) / BLS.exp2_381
+            
+            if ((y.value * 2) / G1.Curve.P) != aflag {
+                y.negate()
+            }
+            
+            try self.init(x: x, y: y)
+        }
+        
+    }
+    
+    init(uncompressedData: Data) throws {
+        guard uncompressedData.count == Self.uncompressedDataByteCount else {
+            throw Error.invalidByteCount(expectedCompressed: Self.compressedDataByteCount, orUncompressed: Self.uncompressedDataByteCount, butGot: uncompressedData.count)
+        }
+        
+        // Check if the infinity flag is set
+        if (uncompressedData[0] & (1 << 6)) != 0 {
+            self = .zero
+        } else {
+            var bytes = [UInt8](uncompressedData)
+            let x = os2ip(Data(bytes.removingFirst(Self.compressedDataByteCount)))
+            let y = os2ip(Data(bytes.removingFirst(Self.compressedDataByteCount)))
+            assert(bytes.isEmpty)
+            try self.init(x: .init(value: x), y: .init(value: y))
+        }
+    }
+
+    
+    // MARK: Data Serialization
+    func toData(compress: Bool = false) -> Data {
+        var out: BigInt
+        if compress {
+            let P = G1.Curve.P
+            if isZero {
+                out = BLS.exp2_383 + BLS.exp2_382
+            } else {
+                let affine = try! point.toAffine()
+                let x = affine.x
+                let y = affine.y
+                let flag = (y.value * 2) / P
+                out = x.value + (flag * BLS.exp2_381) + BLS.exp2_383
+            }
+            return out.serialize(padToLength: Self.compressedDataByteCount)
+        } else {
+            if isZero {
+                var out = Data(repeating: 0x00, count: 2 * Self.compressedDataByteCount)
+                out[0] = 0x40
+                return out
+            } else {
+                let affine = try! point.toAffine()
+                let x = affine.x
+                let y = affine.y
+                return x.value.serialize(padToLength: Self.compressedDataByteCount) + y.value.serialize(padToLength: Self.compressedDataByteCount)
+            }
+        }
+        
+    }
 }

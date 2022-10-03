@@ -94,8 +94,6 @@ private extension HashToCurveG1Tests {
                     return P2(x: x, y: y)
                 }
                 
-                let Q0 = try pointG2(from: vector.Q0)
-                let Q1 = try pointG2(from: vector.Q1)
                 let expected = try pointG2(from: vector.P)
                 return expected
           

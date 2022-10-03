@@ -30,19 +30,6 @@ public extension P2 {
         fatalError()
     }
     
-    init(bytes: some ContiguousBytes) throws {
-        fatalError()
-    }
-    init(uncompressedData: Data) throws {
-        fatalError()
-    }
-    init(compressedData: Data) throws {
-        fatalError()
-    }
-    
-    init(signature: Signature) throws {
-        fatalError()
-    }
 }
 
 public extension P2 {
@@ -87,7 +74,7 @@ public extension P2 {
     
     /// Checks for equation `y² = x³ + b`
     func _isOnCurve() throws -> Bool {
-        let b = Fp2(G2.Curve.b)
+        let b = G2.Curve.b
         let left = try y.pow(n: 2) * z - x.pow(n: 3)
         let right = try b * z.pow(n: 3)
         return (left - right).isZero
@@ -180,11 +167,7 @@ public extension P2 {
     func toSignature() -> Signature {
         fatalError()
     }
-    
-    // MARK: Data Serialization
-    func toData(compress: Bool = false) -> Data {
-        fatalError()
-    }
+
 }
 
 extension P2 {
