@@ -7,12 +7,14 @@
 
 import Foundation
 
-public struct PublicKey: Equatable {
+public struct PublicKey: GroupElementConveritible {
    
-    public let point: G1
+    public typealias Group = G1
+    
+    public let groupElement: G1
    
-    public init(point: G1) {
-        self.point = point
+    public init(groupElement: G1) {
+        self.groupElement = groupElement
     }
 }
 
@@ -59,7 +61,7 @@ internal extension PublicKey {
         _ signature: Signature,
         for message: Message
     ) async throws -> Bool {
-        let P = point
+        let P = groupElement
         let G = G1.generator
         let S = signature.groupElement
         let Hm = message.groupElement

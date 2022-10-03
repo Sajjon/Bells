@@ -114,7 +114,7 @@ public extension G1 {
 
     
     // MARK: Data Serialization
-    func toData(compress: Bool = false) -> Data {
+    func toData(compress: Bool = true) -> Data {
         var out: BigInt
         if compress {
             let P = G1.Curve.P

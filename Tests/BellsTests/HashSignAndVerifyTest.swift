@@ -19,13 +19,13 @@ final class HashSignAndVerifyTest: XCTestCase {
         
         let publicKey = privateKey.publicKey()
         
-        XCTAssertEqual(publicKey.point.toData(compress: true).hex(), "a7e75af9dd4d868a41ad2f5a5b021d653e31084261724fb40ae2f1b1c31c778d3b9464502d599cf6720723ec5c68b59d")
+        XCTAssertEqual(publicKey.toHex(compress: true), "a7e75af9dd4d868a41ad2f5a5b021d653e31084261724fb40ae2f1b1c31c778d3b9464502d599cf6720723ec5c68b59d")
 
         let (signature, message) = try await privateKey.sign(hashing: messageData)
 
-        XCTAssertEqual(message.toData(compress: true).hex(), "a699307340f1f399717e7009acb949d800d09bda1be7f239179d2e2fd9096532e5f597b3d736412bd6cd073ca4fe8056038fa6a09f5ef9e47a9c61d869d8c069b487e64a57f701b2e724fa8cce8fce050d850eeb1b4a39195ce71eed0cb5c807")
+        XCTAssertEqual(message.toHex(compress: true), "a699307340f1f399717e7009acb949d800d09bda1be7f239179d2e2fd9096532e5f597b3d736412bd6cd073ca4fe8056038fa6a09f5ef9e47a9c61d869d8c069b487e64a57f701b2e724fa8cce8fce050d850eeb1b4a39195ce71eed0cb5c807")
 
-        XCTAssertEqual(signature.toData(compress: true).hex(), "b22317bfdb10ba592724c27d0cdc51378e5cd94a12cd7e85c895d2a68e8589e8d3c5b3c80f4fe905ef67aa7827617d04110c5c5248f2bb36df97a58c541961ed0f2fcd0760e9de5ae1598f27638dd3ddaebeea08bf313832a57cfdb7f2baaa03")
+        XCTAssertEqual(signature.toHex(compress: true), "b22317bfdb10ba592724c27d0cdc51378e5cd94a12cd7e85c895d2a68e8589e8d3c5b3c80f4fe905ef67aa7827617d04110c5c5248f2bb36df97a58c541961ed0f2fcd0760e9de5ae1598f27638dd3ddaebeea08bf313832a57cfdb7f2baaa03")
         
         
         let isValid = await publicKey.isValidSignature(signature, for: message)

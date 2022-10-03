@@ -33,6 +33,16 @@ public extension EllipticCurve {
 public protocol DataSerializable {
     func toData(compress: Bool) -> Data
 }
+
+public extension DataSerializable {
+    func toHex(
+        compress: Bool = true,
+        hexEncoding: Data.HexEncodingOptions = []
+    ) -> String {
+        toData(compress: compress).hex(options: hexEncoding)
+    }
+}
+
 public protocol DataDeserializable {
     init(bytes: some ContiguousBytes) throws
     init(uncompressedData: Data) throws
@@ -57,13 +67,9 @@ where Curve.Group == Self {
     init(x: Point.F, y: Point.F, z: Point.F) throws
     var isZero: Bool { get }
     init(point: Point) throws
-    init(bytes: some ContiguousBytes) throws
-    init(uncompressedData: Data) throws
-    init(compressedData: Data) throws
     
     static var compressedDataByteCount: Int { get }
     static var uncompressedDataByteCount: Int { get }
-    func toData(compress: Bool) -> Data
 }
 
 public extension FiniteGroup {

@@ -20,7 +20,7 @@ public extension PrivateKey {
     
     func publicKey() -> PublicKey {
         try! .init(
-            point: G1(point: G1.generator.point.multiplyPrecomputed(scalar: scalar))
+            groupElement: G1(point: G1.generator.point.multiplyPrecomputed(scalar: scalar))
         )
     }
     

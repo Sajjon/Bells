@@ -12,12 +12,12 @@ public protocol GroupElementConveritible: CustomToStringConvertible, DataSeriali
     var groupElement: Group { get }
     init(groupElement: Group)
 }
+
 public extension GroupElementConveritible {
     func toString(radix: Int, pad: Bool) -> String {
         groupElement.toString(radix: radix, pad: pad)
     }
 }
-
 
 
 public extension GroupElementConveritible {
@@ -41,10 +41,9 @@ public extension GroupElementConveritible {
         }
     }
     
-    func toData(compress: Bool) -> Data {
+    func toData(compress: Bool = true) -> Data {
         groupElement.toData(compress: compress)
     }
-    
 }
 
 struct BadByteCount: Error {}

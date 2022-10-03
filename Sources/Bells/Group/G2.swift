@@ -156,7 +156,7 @@ public extension G2 {
         }
     }
 
-    func toData(compress: Bool) -> Data {
+    func toData(compress: Bool = true) -> Data {
     
         if compress {
             var x0: BigInt = 0
