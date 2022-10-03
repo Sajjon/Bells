@@ -118,7 +118,7 @@ private extension HashToCurveG1Tests {
         name: String,
         reverseVectorOrder: Bool = false,
         expectedFromVector: @escaping (Array<HashToCurveTestSuite<Expected>.Vector>.Index, HashToCurveTestSuite<Expected>.Vector) throws -> Expected,
-        functionForOperation: @escaping (Operation_) -> (Message, DomainSeperationTag) async throws -> OperationResult,
+        functionForOperation: @escaping (Operation_) -> (Data, DomainSeperationTag) async throws -> OperationResult,
         operationResultToExpected: @escaping (OperationResult) throws -> Expected
     ) async throws {
         

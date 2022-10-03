@@ -25,7 +25,8 @@ final class G2Tests: GroupTest<G2> {
     }
     
     func test_g2_from_compressed_data_non_zero() throws {
- let g2 = try G2(hex: "b2cc74bc9f089ed9764bbceac5edba416bef5e73701288977b9cac1ccb6964269d4ebf78b4e8aa7792ba09d3e49c8e6a1351bdf582971f796bbaf6320e81251c9d28f674d720cca07ed14596b96697cf18238e0e03ebd7fc1353d885a39407e0")
+        XCTAssertNoThrow(try G2(hex: "b2cc74bc9f089ed9764bbceac5edba416bef5e73701288977b9cac1ccb6964269d4ebf78b4e8aa7792ba09d3e49c8e6a1351bdf582971f796bbaf6320e81251c9d28f674d720cca07ed14596b96697cf18238e0e03ebd7fc1353d885a39407e0")
+        )
         
     }
     

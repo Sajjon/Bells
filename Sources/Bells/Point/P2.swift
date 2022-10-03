@@ -38,13 +38,12 @@ public extension P2 {
 }
 
 
-public typealias Message = Data
 public extension P2 {
     
     /// Encodes byte string to elliptic curve
       /// https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-hash-to-curve-11#section-3
     static func hashToCurve(
-        message: Message,
+        message: Data,
         hashToFieldConfig: HashToFieldConfig = .defaultForHashToG2
     ) async throws -> Self {
         let u = try await BLS.hashToField(
