@@ -110,6 +110,41 @@ final class HashSignAndVerifyTest: XCTestCase {
         isValidOther = await PublicKey.other.isValidSignature(.forged, for: message)
         XCTAssertFalse(isValidOther)
     }
+    
+    func test_sign_many_messages_with_many_keys() async throws {
+        // Sign 3 msg with 3 keys
+        let privateKeys = try [
+            "18f020b98eb798752a50ed0563b079c125b0db5dd0b1060d1c1b47d4a193e1e4",
+            "23eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000000",
+            "16ae669f3be7a2121e17d0c68c05a8f3d6bef21ec0f2315f1d7aec12484e4cf5"
+        ].map { try PrivateKey(scalar: .init(hex: $0)) }
+        
+        let messages = try ["d2", "0d98", "05caf3"].map { try Data(hex: $0) }
+
+        let publicKeys = privateKeys.map { $0.publicKey() }
+        let signaturesAndMessages = try await privateKeys.enumerated().asyncMap({ i, sk in
+            try await sk.sign(hashing: messages[i])
+        })
+        
+//        let aggregatedPublicKey = try PublicKey.aggregate(publicKeys)
+        let aggregatedSignature = try Signature.aggregate(signaturesAndMessages.map { $0.signature })
+        
+//        let isValid = await aggregatedPublicKey.isValidSignature(aggregatedSignature, for: message)
+        let isValid = await PublicKey.isValidSignature(
+            aggregatedSignature,
+            forMessages: signaturesAndMessages.map { $0.message },
+            publicKeysOfSigners: publicKeys
+        )
+        
+        
+        
+        XCTAssertTrue(isValid)
+        
+//        XCTAssertEqual(aggregatedPublicKey.toHex(compress: true), "99f1d4ae64167802393b76a3a14719ee449b59a0e5440ee9d8cc27eedbf42d0783430598ada1d8027910d8d8c2511461")
+//
+//        XCTAssertEqual(aggregatedSignature.toHex(compress: true), "8ba8334c1abba0bd490b14bae814d9e674a6f649dfbe72be2e6caf9b882f0a5b5612fc7ff1865c15f1d3b36faae71322063d92170fa2eaed48a3fddcfd5a2a1de29cb05bdd70ac6e7d7d103e913dc187a56aa1d18229d635f6ca6dddfc8d0cff")
+        
+    }
 }
 
 private extension Signature {
@@ -126,16 +161,3 @@ private extension PublicKey {
     static let other: Self = try! PrivateKey(scalar: 237).publicKey()
 }
 
-extension Sequence {
-    func asyncMap<T>(
-        _ transform: (Element) async throws -> T
-    ) async rethrows -> [T] {
-        var values = [T]()
-
-        for element in self {
-            try await values.append(transform(element))
-        }
-
-        return values
-    }
-}

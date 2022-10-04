@@ -18,7 +18,14 @@ public extension GroupElementConveritible {
         groupElement.toString(radix: radix, pad: pad)
     }
 }
-
+public extension GroupElementConveritible {
+    static func ==(lhs: Self, rhs: Group) -> Bool {
+        lhs.groupElement == rhs
+    }
+    static func ==(lhs: Group, rhs: Self) -> Bool {
+        lhs == rhs.groupElement
+    }
+}
 
 public extension GroupElementConveritible {
 
