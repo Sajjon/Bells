@@ -12,6 +12,11 @@ import BigInt
 
 final class HashSignAndVerifyTest: XCTestCase {
     
+    override func setUp() {
+        super.setUp()
+        continueAfterFailure = false
+    }
+    
     // Tested vs README example: https://github.com/paulmillr/noble-bls12-381, for which tests have been added in Noble.
     func test_hash_message_sign_and_verify() async throws {
         let privateKey = try PrivateKey(scalar: .init(hex: "67d53f170b908cabb9eb326c3c337762d59289a8fec79f7bc9254b584b73265c"))
@@ -145,6 +150,81 @@ final class HashSignAndVerifyTest: XCTestCase {
 //        XCTAssertEqual(aggregatedSignature.toHex(compress: true), "8ba8334c1abba0bd490b14bae814d9e674a6f649dfbe72be2e6caf9b882f0a5b5612fc7ff1865c15f1d3b36faae71322063d92170fa2eaed48a3fddcfd5a2a1de29cb05bdd70ac6e7d7d103e913dc187a56aa1d18229d635f6ca6dddfc8d0cff")
         
     }
+    
+    // Passes after 140 seconds when run with optimizaiton flags on M1.
+    func test_sign_vectors() async throws {
+
+        try await doTestSuite(
+            name: "SignatureTestVectors"
+        ) { suite, vector, vectorIndex in
+            guard vectorIndex >= 2 else { return }
+            let dst = try vector.dst()
+            
+            let messageRaw = try vector.message()
+            let g1 = try G1(compressedData: vector.g1CompressedData())
+            let g2 = try G2(compressedData: vector.g2CompressedData())
+//            try XCTAssertEqual(g1, hashToG1(message: message, domainSeperationTag: dst).element)
+            let hashed = try await P2.hashToCurve(
+                message: messageRaw,
+                hashToFieldConfig: .init(domainSeperationTag: dst)
+            )
+            XCTAssertEqual(
+                g2.point,
+                hashed
+            )
+            
+            
+            let secretKey = try PrivateKey(
+                scalar: BigInt.init(vector.secretKeyDecimalString(), radix: 10)!
+            )
+            let publicKey = try PublicKey(compressedData: vector.publicKeyData())
+            XCTAssertEqual(secretKey.publicKey(), publicKey)
+           
+//            let signature = try secretKey.sign(
+//                message: message,
+//                domainSeperationTag: dst
+//            )
+            let message = Message(groupElement: g2)
+            let signature = try await secretKey.sign(message: message)
+            
+            try XCTAssertEqual(signature.toData(compress: true), vector.signatureData())
+            
+            // VERIFY
+//            let isSignatureValid = try await signature.verify(
+//                publicKey: publicKey,
+//                message: message,
+//                domainSeperationTag: dst
+//            )
+            let isSignatureValid = await publicKey.isValidSignature(signature, for: message)
+            
+            XCTAssertTrue(isSignatureValid)
+            
+            var isValidOther = true
+            // Other PublicKey
+            isValidOther = await PublicKey.other.isValidSignature(signature, for: message)
+            XCTAssertFalse(isValidOther)
+            
+            // Forge signature
+            isValidOther = await publicKey.isValidSignature(.forged, for: message)
+            XCTAssertFalse(isValidOther)
+            
+            // Other message
+            isValidOther = await publicKey.isValidSignature(signature, for: .other)
+            XCTAssertFalse(isValidOther)
+            
+            // Other PublicKey, Other message (same sig)
+            isValidOther = await PublicKey.other.isValidSignature(signature, for: .other)
+            XCTAssertFalse(isValidOther)
+            
+            // Forge signature, Other Message (same pubkey)
+            isValidOther = await publicKey.isValidSignature(.forged, for: .other)
+            XCTAssertFalse(isValidOther)
+            
+            // Other PublicKey, Forge signature (same message)
+            isValidOther = await PublicKey.other.isValidSignature(.forged, for: message)
+            XCTAssertFalse(isValidOther)
+        }
+    }
 }
 
 private extension Signature {
@@ -159,5 +239,73 @@ private extension Message {
 
 private extension PublicKey {
     static let other: Self = try! PrivateKey(scalar: 237).publicKey()
+}
+
+
+
+private extension HashSignAndVerifyTest {
+    
+    func doTestSuite(
+        name: String,
+        reverseVectorOrder: Bool = false,
+        testVector: @escaping (SignTestSuite, SignTestSuite.Test, Int) async throws -> Void,
+        line: UInt = #line
+    ) async throws {
+        try await doTestJSONFixture(
+            name: name,
+            decodeAs: SignTestSuite.self,
+            reverseVectorOrder: reverseVectorOrder,
+            testVectorFunction: testVector
+        )
+    }
+}
+
+
+struct SignTestSuite: TestSuite, Decodable {
+    
+    public var name: String { "SignTests" }
+    public let cases: [Test]
+    public var tests: [Test] { cases }
+
+    struct Test: Decodable {
+        let Msg: String
+        let Ciphersuite: String
+        let G1Compressed: String
+        let G2Compressed: String
+        let BLSPrivKey: String
+        let BLSPubKey: String
+        let BLSSigG2: String
+        
+        func message(line: UInt = #line) throws -> Data {
+            try XCTUnwrap(Msg.data(using: .utf8), line: line)
+        }
+        func dst(line: UInt = #line) throws -> DomainSeperationTag {
+            let data = try XCTUnwrap(Ciphersuite.data(using: .utf8), line: line)
+            return DomainSeperationTag(data: data)
+        }
+        func secretKeyDecimalString() throws -> String {
+            BLSPrivKey
+        }
+        
+        func signatureData(line: UInt = #line) throws -> Data {
+            let base64Encoded = try XCTUnwrap(BLSSigG2, line: line)
+            return try XCTUnwrap(Data(base64Encoded: base64Encoded), line: line)
+        }
+        
+        func publicKeyData(line: UInt = #line) throws -> Data {
+            let base64Encoded = try XCTUnwrap(BLSPubKey, line: line)
+            return try XCTUnwrap(Data(base64Encoded: base64Encoded), line: line)
+        }
+        
+        func g1CompressedData(line: UInt = #line) throws -> Data {
+            let base64Encoded = try XCTUnwrap(G1Compressed, line: line)
+            return try XCTUnwrap(Data(base64Encoded: base64Encoded), line: line)
+        }
+        
+        func g2CompressedData(line: UInt = #line) throws -> Data {
+            let base64Encoded = try XCTUnwrap(G2Compressed, line: line)
+            return try XCTUnwrap(Data(base64Encoded: base64Encoded), line: line)
+        }
+    }
 }
 

@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct PublicKey: GroupElementConveritible {
+public struct PublicKey: GroupElementConveritible, Equatable {
    
     public typealias Group = G1
     
