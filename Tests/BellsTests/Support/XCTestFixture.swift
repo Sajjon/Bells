@@ -18,6 +18,39 @@ extension CipherSuite {
 }
 
 extension XCTestCase {
+    
+    func doTestJSONFixture<S: TestSuite, TestVector: Decodable>(
+        name: String,
+        decodeAs: TestVector.Type,
+        embedInSuite: @escaping ([TestVector]) -> S,
+        reverseVectorOrder: Bool = false,
+        testVectorFunction: @escaping (S, TestVector, Int) async throws -> Void,
+        file: StaticString = #file,
+        line: UInt = #line
+    ) async throws where TestVector == S.Test {
+        try await _doTestSuite(
+            fileName: name,
+            fileExtension: "json",
+            suiteFromData: {
+                let vectors = try JSONDecoder().decode([TestVector].self, from: $0)
+                return embedInSuite(vectors)
+            },
+            testSuite: { suite in
+                if reverseVectorOrder {
+                    for (testIndex, test) in suite.tests.enumerated().reversed() {
+                        try await testVectorFunction(suite, test, testIndex)
+                    }
+                } else {
+                    for (testIndex, test) in suite.tests.enumerated() {
+                        try await testVectorFunction(suite, test, testIndex)
+                    }
+                }
+            },
+            file: file,
+            line: line
+        )
+    }
+    
     func doTestJSONFixture<S: TestSuite & Decodable>(
         name: String,
         decodeAs: S.Type,

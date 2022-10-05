@@ -56,16 +56,6 @@ extension Fp {
     }
 }
 
-func bigInt(
-    hexConcatenated: String
-) throws -> (BigInt, BigInt) {
-    // The vector contains REAL and IMG concat together with ","
-    let hexParts = hexConcatenated.split(separator: ",").map(String.init)
-    let (hex0, hex1) = (hexParts[0], hexParts[1])
-    let data0 = try Data(hex: hex0)
-    let data1 = try Data(hex: hex1)
-    return (BigInt(data: data0), BigInt(data: data1))
-}
 
 private extension HashToCurveG1Tests {
     
@@ -77,26 +67,8 @@ private extension HashToCurveG1Tests {
             name: name,
             reverseVectorOrder: reverseVectorOrder
         ) { _, vector in
-           
-                
-                func fp2(
-                    _ keyPath: KeyPath<DecodableElement, String>,
-                    in decodableElement: DecodableElement
-                ) throws -> Fp2 {
-                    let hexConcatenated: String = decodableElement[keyPath: keyPath]
-                    let (c0, c1) = try bigInt(hexConcatenated: hexConcatenated)
-                    return Fp2(c0: Fp(value: c0), c1: Fp(value: c1))
-                }
-                
-                func pointG2(from decodableElement: DecodableElement) throws -> P2 {
-                    let x = try fp2(\.x, in: decodableElement)
-                    let y = try fp2(\.y, in: decodableElement)
-                    return P2(x: x, y: y)
-                }
-                
-                let expected = try pointG2(from: vector.P)
-                return expected
-          
+            try vector.P.p2()
+            
         } functionForOperation: { operation in
             switch operation {
             case .encode:
@@ -198,6 +170,32 @@ struct HashToCurveTestSuite<Element>: CipherSuite, Decodable {
 struct DecodableElement: Decodable {
     let x: String
     let y: String
+}
+extension DecodableElement {
+    
+    func xInts() throws -> (c0: BigInt, c1: BigInt) {
+         try bigInt(hexConcatenated: x)
+    }
+    func yInts() throws -> (c0: BigInt, c1: BigInt) {
+         try bigInt(hexConcatenated: y)
+    }
+    
+    func p2() throws -> P2 {
+        let x: Fp2 = try .init(xInts())
+        let y: Fp2 = try .init(yInts())
+        return P2(x: x, y: y)
+    }
+    
+    private func bigInt(
+        hexConcatenated: String
+    ) throws -> (BigInt, BigInt) {
+        // The vector contains REAL and IMG concat together with ","
+        let hexParts = hexConcatenated.split(separator: ",").map(String.init)
+        let (hex0, hex1) = (hexParts[0], hexParts[1])
+        let data0 = try Data(hex: hex0)
+        let data1 = try Data(hex: hex1)
+        return (BigInt(data: data0), BigInt(data: data1))
+    }
 }
 
 extension HashToCurveTestSuite {

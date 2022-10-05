@@ -567,7 +567,10 @@ public struct DomainSeperationTag: Equatable, ExpressibleByStringLiteral {
     }
     
     // https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-hash-to-curve-11#section-8.8.2
-    public static let g2: Self = "BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_NUL_"
+    public static let g2Basic: Self = "BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_NUL_"
+    
+    /// Proof of possession
+    public static let g2Pop: Self = "BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_"
 }
 
 public struct HashToFieldConfig: Equatable {
@@ -589,7 +592,7 @@ public struct HashToFieldConfig: Equatable {
     public let expand: Bool
     
     public init(
-        domainSeperationTag: DomainSeperationTag = .g2,
+        domainSeperationTag: DomainSeperationTag = .g2Basic,
         p: BigInt = G1.Curve.P,
         m: Int = 2,
         k: Int = 128,
