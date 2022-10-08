@@ -161,13 +161,13 @@ final class HashSignAndVerifyTest: XCTestCase {
             let dst = try vector.dst()
             
             let messageRaw = try vector.message()
-            let g1 = try G1(compressedData: vector.g1CompressedData())
+            let _ = try G1(compressedData: vector.g1CompressedData())
             let g2 = try G2(compressedData: vector.g2CompressedData())
-//            try XCTAssertEqual(g1, hashToG1(message: message, domainSeperationTag: dst).element)
             let hashed = try await P2.hashToCurve(
                 message: messageRaw,
                 hashToFieldConfig: .init(domainSeperationTag: dst)
             )
+
             XCTAssertEqual(
                 g2.point,
                 hashed

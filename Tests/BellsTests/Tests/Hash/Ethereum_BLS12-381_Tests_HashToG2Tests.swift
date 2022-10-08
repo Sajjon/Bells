@@ -21,7 +21,7 @@ final class Ethereum_BLS12_381_Tests_HashToG2Tests: XCTestCase {
         continueAfterFailure = false
     }
     
-    func test_pop_vectors() async throws {
+    func test_suite() async throws {
         try await doTestSuite(
             name: "ethereum_bls12-381-tests_hash_to_g2"
         ) { suite, vector, vectorIndex in
@@ -57,10 +57,10 @@ private extension Ethereum_BLS12_381_Tests_HashToG2Tests {
 /// Manual copy paste of JSON object from each file in folder, into single array.
 ///
 /// [source]: https://github.com/ethereum/bls12-381-tests/blob/master/formats/hash_to_G2.md
-struct HashToG2Suite: TestSuite, Decodable {
+private struct HashToG2Suite: TestSuite, Decodable {
     struct Test: Decodable {
         struct Input: Decodable {
-            /// Hex
+            /// UTF8, not hex
             let msg: String
         }
         let input: Input

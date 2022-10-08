@@ -126,7 +126,7 @@ private extension HashToCurveG1Tests {
     }
 }
 
-struct HashToCurveTestSuite<Element>: CipherSuite, Decodable {
+struct HashToCurveTestSuite<Element>: CipherSuiteToTest, Decodable {
     
     let ciphersuite: String
     let dst: String

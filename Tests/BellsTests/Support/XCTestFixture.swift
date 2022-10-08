@@ -6,13 +6,13 @@ protocol TestSuite<Test> {
     var tests: [Test] { get }
 }
 
-protocol CipherSuite<Vector>: TestSuite where Test == Vector {
+protocol CipherSuiteToTest<Vector>: TestSuite where Test == Vector {
     associatedtype Vector
     associatedtype Test
     var ciphersuite: String { get }
     var vectors: [Vector] { get }
 }
-extension CipherSuite {
+extension CipherSuiteToTest {
     var tests: [Test] { vectors }
     var name: String { ciphersuite }
 }

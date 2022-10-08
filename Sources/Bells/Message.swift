@@ -18,7 +18,17 @@ public struct Message: Equatable, GroupElementConveritible {
 
 public extension Message {
     init(hashing data: Data) async throws {
-        let p2 = try await P2.hashToCurve(message: data)
+        try await self.init(hashing: data, domainSeperationTag: .g2Basic)
+    }
+}
+
+
+internal extension Message {
+    init(hashing data: Data, domainSeperationTag: DomainSeperationTag) async throws {
+        let p2 = try await P2.hashToCurve(
+            message: data,
+            hashToFieldConfig: .init(domainSeperationTag: domainSeperationTag)
+        )
         try self.init(groupElement: .init(point: p2))
     }
 }
