@@ -13,12 +13,23 @@ public struct PublicKey: GroupElementConveritible, Equatable {
     
     public let groupElement: G1
    
-    public init(groupElement: G1) {
+    public init(groupElement: G1) throws {
+        guard !groupElement.isZero else {
+            throw Error.invalidPublicKeyAtInfinity
+        }
+        guard groupElement.subgroupCheck() else {
+            throw Error.invalidPublicKeyNotSubgroup
+        }
         self.groupElement = groupElement
     }
 }
 
 public extension PublicKey {
+    
+    enum Error: String, Swift.Error, Sendable {
+        case invalidPublicKeyAtInfinity
+        case invalidPublicKeyNotSubgroup
+    }
     
     /// Checks if pairing of public key & hash is equal to pairing of generator & signature.
     /// `e(P, H(m)) == e(G, S)`

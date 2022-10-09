@@ -10,7 +10,7 @@ import Foundation
 public protocol GroupElementConveritible: CustomToStringConvertible, DataSerializable, DataDeserializable {
     associatedtype Group: FiniteGroup
     var groupElement: Group { get }
-    init(groupElement: Group)
+    init(groupElement: Group) throws
 }
 
 public extension GroupElementConveritible {

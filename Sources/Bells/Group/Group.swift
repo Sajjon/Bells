@@ -83,6 +83,13 @@ public extension FiniteGroup {
     func negated() throws -> Self {
         try Self(point: point.negated())
     }
+    func subgroupCheck() -> Bool {
+        do {
+            return try point.unsafeMultiply(scalar: Curve.order) == .zero
+        } catch {
+            return false
+        }
+    }
 }
 private extension FiniteGroup {
     static func op(_ lhs: Self, _ rhs: Self, _ operation: (Point, Point) throws -> Point) throws -> Self {

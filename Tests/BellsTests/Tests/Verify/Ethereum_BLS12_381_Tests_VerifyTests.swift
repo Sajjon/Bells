@@ -25,8 +25,8 @@ final class Ethereum_BLS12_381_Tests_VerifyTests: XCTestCase {
         try await doTestSuite(
             name: "ethereum_bls12-381-tests_verify"
         ) { suite, vector, vectorIndex in
-            let publicKey = try vector.publicKey()
             do {
+                let publicKey = try vector.publicKey()
                 let signature = try vector.expectedSignature()
                 let message = try await Message(hashing: vector.messageToHash(), domainSeperationTag: .g2Pop)
                 let isValid = await publicKey.isValidSignature(signature, for: message)
