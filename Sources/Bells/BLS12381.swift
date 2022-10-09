@@ -87,7 +87,8 @@ internal enum Isogeny {
     
 }
 
-
+// For info about different ciphersuites see
+// https://www.ietf.org/id/draft-irtf-cfrg-bls-signature-05.html#name-ciphersuites-for-bls12-381
 public enum BLS {}
 public extension BLS {
     
@@ -527,7 +528,7 @@ func os2ip(_ data: Data) -> BigInt {
     BigInt(sign: .plus, magnitude: BigUInt(data))
 }
 
-public struct DomainSeperationTag: Equatable, ExpressibleByStringLiteral {
+public struct DomainSeperationTag: Sendable, Equatable, ExpressibleByStringLiteral {
     internal let _data: Data
     public enum Mode {
         case expandMessageXOF

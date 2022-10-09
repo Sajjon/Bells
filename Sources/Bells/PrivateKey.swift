@@ -26,10 +26,10 @@ public extension PrivateKey {
     
     /// Executes `hashToCurve` on the message and then multiplies the result by private key.
     /// S = pk x H(m)
-    func sign(hashing messageToHash: Data) async throws -> (signature: Signature, message: Message) {
-        let message = try await Message(hashing: messageToHash)
-        let signature = try await sign(message: message)
-        return (signature, message)
+    func sign(
+        hashing messageToHash: Data
+    ) async throws -> (signature: Signature, message: Message) {
+        try await sign(hashing: messageToHash, domainSeperationTag: .g2Basic)
     }
     
     /// multiplies the message by private key.
@@ -38,4 +38,18 @@ public extension PrivateKey {
         let signaturePoint = try message.groupElement * scalar
         return Signature(groupElement: signaturePoint)
     }
+}
+
+internal extension PrivateKey {
+    /// Executes `hashToCurve` on the message and then multiplies the result by private key.
+    /// S = pk x H(m)
+    func sign(
+        hashing messageToHash: Data,
+        domainSeperationTag: DomainSeperationTag
+    ) async throws -> (signature: Signature, message: Message) {
+        let message = try await Message(hashing: messageToHash, domainSeperationTag: domainSeperationTag)
+        let signature = try await sign(message: message)
+        return (signature, message)
+    }
+    
 }
